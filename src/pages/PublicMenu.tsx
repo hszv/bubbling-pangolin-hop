@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { UtensilsCrossed, AlertTriangle } from "lucide-react";
+import { UtensilsCrossed, AlertTriangle, PlusCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -9,6 +9,9 @@ import Footer from "@/components/Footer";
 import { useEffect } from "react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { ReservationSheet } from "@/components/public/ReservationSheet";
+import { CartProvider, useCart } from "@/contexts/CartContext";
+import { CartSheet } from "@/components/public/CartSheet";
+import { Button } from "@/components/ui/button";
 
 type MenuItem = {
   id: string;
@@ -31,17 +34,19 @@ type Profile = {
   restaurant_name: string;
   logo_url: string | null;
   primary_color: string | null;
+  plan: string;
 };
 
-const PublicMenu = () => {
+const MenuContent = () => {
   const { userId } = useParams<{ userId: string }>();
+  const { addToCart } = useCart();
 
   const fetchMenuData = async () => {
     if (!userId) throw new Error("ID do restaurante não fornecido.");
 
     const profilePromise = supabase
       .from("profiles")
-      .select("restaurant_name, logo_url, primary_color")
+      .select("restaurant_name, logo_url, primary_color, plan")
       .eq("id", userId)
       .single<Profile>();
 
@@ -73,9 +78,8 @@ const PublicMenu = () => {
     enabled: !!userId,
   });
 
-  // Log menu view
   useEffect(() => {
-    if (userId) {
+    if (userId && data?.profile.plan !== 'Básico') {
       const logView = async () => {
         await supabase.from('menu_analytics').insert({
           restaurant_id: userId,
@@ -84,18 +88,7 @@ const PublicMenu = () => {
       };
       logView();
     }
-  }, [userId]);
-
-  // Log item click
-  const handleItemClick = async (itemId: string) => {
-    if (userId) {
-      await supabase.from('menu_analytics').insert({
-        restaurant_id: userId,
-        event_type: 'item_click',
-        metadata: { item_id: itemId },
-      });
-    }
-  };
+  }, [userId, data]);
 
   useEffect(() => {
     if (data?.profile.primary_color) {
@@ -116,10 +109,7 @@ const PublicMenu = () => {
   }, {} as Record<string, MenuItem[]>);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
 
   if (isLoading) {
@@ -128,15 +118,6 @@ const PublicMenu = () => {
         <Skeleton className="h-24 w-24 rounded-full mx-auto mb-4" />
         <Skeleton className="h-8 w-1/2 mx-auto mb-8" />
         <Skeleton className="h-64 w-full mb-8" />
-        <div className="space-y-8">
-          <div>
-            <Skeleton className="h-6 w-1/4 mb-4" />
-            <div className="grid md:grid-cols-2 gap-4">
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-          </div>
-        </div>
       </div>
     );
   }
@@ -152,53 +133,26 @@ const PublicMenu = () => {
       </div>
     );
   }
+  
+  const canOrder = data?.profile.plan === 'Premium';
+  const canReserve = data?.profile.plan === 'Profissional' || data?.profile.plan === 'Premium';
 
   return (
     <div className="bg-background text-foreground">
-      <style>
-        {`
-          .custom-primary-bg { background-color: var(--custom-primary, hsl(var(--primary))); }
-          .custom-primary-text { color: var(--custom-primary, hsl(var(--primary))); }
-        `}
-      </style>
+      <style>{`.custom-primary-bg { background-color: var(--custom-primary, hsl(var(--primary))); } .custom-primary-text { color: var(--custom-primary, hsl(var(--primary))); }`}</style>
+      
       <header className="py-8 text-center sticky top-0 bg-background/80 backdrop-blur-sm z-10">
         <div className="container mx-auto px-4">
-          {data?.profile.logo_url ? (
-            <img src={data.profile.logo_url} alt={`Logo de ${data.profile.restaurant_name}`} className="h-20 w-20 object-contain mx-auto mb-4 rounded-md" />
-          ) : (
-            <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
-              <UtensilsCrossed className="h-10 w-10 text-muted-foreground" />
-            </div>
-          )}
+          {data?.profile.logo_url ? <img src={data.profile.logo_url} alt={`Logo de ${data.profile.restaurant_name}`} className="h-20 w-20 object-contain mx-auto mb-4 rounded-md" /> : <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4"><UtensilsCrossed className="h-10 w-10 text-muted-foreground" /></div>}
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{data?.profile.restaurant_name}</h1>
-          {userId && (
-            <div className="mt-4">
-              <ReservationSheet restaurantId={userId} />
-            </div>
-          )}
+          {userId && canReserve && <div className="mt-4"><ReservationSheet restaurantId={userId} /></div>}
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
         {data?.banners && data.banners.length > 0 && (
           <section className="mb-12">
-            <Carousel className="w-full max-w-4xl mx-auto">
-              <CarouselContent>
-                {data.banners.map((banner) => (
-                  <CarouselItem key={banner.id}>
-                    <a href={banner.link_url || '#'} target="_blank" rel="noopener noreferrer" className="block">
-                      <Card className="overflow-hidden">
-                        <CardContent className="p-0">
-                          <img src={banner.image_url} alt={banner.title} className="w-full aspect-[3/1] object-cover" />
-                        </CardContent>
-                      </Card>
-                    </a>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
-            </Carousel>
+            <Carousel className="w-full max-w-4xl mx-auto"><CarouselContent>{data.banners.map((banner) => (<CarouselItem key={banner.id}><a href={banner.link_url || '#'} target="_blank" rel="noopener noreferrer" className="block"><Card className="overflow-hidden"><CardContent className="p-0"><img src={banner.image_url} alt={banner.title} className="w-full aspect-[3/1] object-cover" /></CardContent></Card></a></CarouselItem>))}</CarouselContent><CarouselPrevious /><CarouselNext /></Carousel>
           </section>
         )}
 
@@ -206,40 +160,44 @@ const PublicMenu = () => {
           <div className="space-y-12">
             {Object.entries(groupedMenu).map(([category, items]) => (
               <section key={category}>
-                <h2 className="text-3xl font-bold tracking-tight mb-6 custom-primary-text border-b-2 border-current pb-2">
-                  {category}
-                </h2>
+                <h2 className="text-3xl font-bold tracking-tight mb-6 custom-primary-text border-b-2 border-current pb-2">{category}</h2>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {items.map((item) => (
-                    <Card key={item.id} className="overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary" onClick={() => handleItemClick(item.id)}>
-                      <div className="flex">
-                        <div className="flex-grow p-4">
+                    <Card key={item.id} className="overflow-hidden flex flex-col">
+                      <div className="flex flex-grow">
+                        <div className="flex-grow p-4 flex flex-col">
                           <h3 className="text-lg font-semibold mb-1">{item.name}</h3>
-                          {item.description && (
-                            <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
-                          )}
-                          <p className="font-semibold text-lg custom-primary-text">{formatCurrency(item.price)}</p>
+                          {item.description && <p className="text-sm text-muted-foreground mb-2 flex-grow">{item.description}</p>}
+                          <p className="font-semibold text-lg custom-primary-text mt-auto">{formatCurrency(item.price)}</p>
                         </div>
-                        {item.image_url && (
-                          <img src={item.image_url} alt={item.name} className="w-32 h-32 object-cover flex-shrink-0" />
-                        )}
+                        {item.image_url && <img src={item.image_url} alt={item.name} className="w-32 h-full object-cover flex-shrink-0" />}
                       </div>
+                      {canOrder && (
+                        <CardContent className="p-4 pt-0">
+                          <Button className="w-full custom-primary-bg" onClick={() => addToCart(item)}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
+                          </Button>
+                        </CardContent>
+                      )}
                     </Card>
                   ))}
                 </div>
               </section>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-16">
-            <h2 className="text-2xl font-semibold">Cardápio Vazio</h2>
-            <p className="text-muted-foreground mt-2">Este restaurante ainda não adicionou itens ao cardápio.</p>
-          </div>
-        )}
+        ) : <div className="text-center py-16"><h2 className="text-2xl font-semibold">Cardápio Vazio</h2><p className="text-muted-foreground mt-2">Este restaurante ainda não adicionou itens ao cardápio.</p></div>}
       </main>
+      
+      {userId && canOrder && <CartSheet restaurantId={userId} />}
       <Footer />
     </div>
   );
 };
+
+const PublicMenu = () => (
+  <CartProvider>
+    <MenuContent />
+  </CartProvider>
+);
 
 export default PublicMenu;

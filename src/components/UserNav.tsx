@@ -52,7 +52,9 @@ export function UserNav() {
             </a>
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem disabled>Configurações</DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/dashboard/settings">Configurações</Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
           Sair

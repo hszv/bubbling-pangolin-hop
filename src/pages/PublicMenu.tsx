@@ -13,6 +13,7 @@ import { CartProvider, useCart } from "@/contexts/CartContext";
 import { CartSheet } from "@/components/public/CartSheet";
 import { Button } from "@/components/ui/button";
 import { ReviewSheet } from "@/components/public/ReviewSheet";
+import { WhatsAppButton } from "@/components/public/WhatsAppButton";
 
 type MenuItem = {
   id: string;
@@ -44,6 +45,7 @@ type Profile = {
   logo_url: string | null;
   primary_color: string | null;
   plan: string;
+  whatsapp_number: string | null;
 };
 
 const StarRating = ({ rating }: { rating: number }) => (
@@ -64,7 +66,7 @@ const MenuContent = () => {
   const fetchMenuData = async () => {
     if (!userId) throw new Error("ID do restaurante não fornecido.");
 
-    const profilePromise = supabase.from("profiles").select("restaurant_name, logo_url, primary_color, plan").eq("id", userId).single<Profile>();
+    const profilePromise = supabase.from("profiles").select("restaurant_name, logo_url, primary_color, plan, whatsapp_number").eq("id", userId).single<Profile>();
     const menuItemsPromise = supabase.from("menu_items").select("id, name, description, price, category, image_url").eq("user_id", userId).order("category");
     const bannersPromise = supabase.from("banners").select("id, title, description, image_url, link_url").eq("user_id", userId).eq("is_active", true).order("created_at", { ascending: false });
     const reviewsPromise = supabase.from("reviews").select("id, rating, comment, reviewer_name, created_at").eq("restaurant_id", userId).order("created_at", { ascending: false });
@@ -194,6 +196,7 @@ const MenuContent = () => {
         </section>
       )}
 
+      {data?.profile.whatsapp_number && <WhatsAppButton phoneNumber={data.profile.whatsapp_number} />}
       {userId && canOrder && <CartSheet restaurantId={userId} />}
       <Footer />
     </div>

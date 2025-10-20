@@ -22,7 +22,7 @@ import type { Order } from "@/pages/dashboard/Orders";
 interface OrderDetailsDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  order: Order | null;
+  order: (Order & { coupon_code?: string | null; discount_amount?: number | null; }) | null;
 }
 
 type OrderItem = {
@@ -85,8 +85,22 @@ export function OrderDetailsDialog({ isOpen, onClose, order }: OrderDetailsDialo
                   ))}
                 </TableBody>
               </Table>
-              <div className="mt-4 text-right font-bold text-lg">
-                Total: {formatCurrency(order?.total_price ?? 0)}
+              <div className="mt-4 space-y-1">
+                {order?.discount_amount && order.discount_amount > 0 && (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal:</span>
+                      <span>{formatCurrency((order.total_price ?? 0) + (order.discount_amount ?? 0))}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                      <span>Desconto ({order.coupon_code}):</span>
+                      <span>- {formatCurrency(order.discount_amount)}</span>
+                    </div>
+                  </>
+                )}
+                <div className="pt-2 border-t text-right font-bold text-lg">
+                  Total: {formatCurrency(order?.total_price ?? 0)}
+                </div>
               </div>
               {order?.notes && (
                 <div className="mt-4">

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, XCircle } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,26 +24,34 @@ interface CartSheetProps {
 }
 
 export function CartSheet({ restaurantId }: CartSheetProps) {
-  const { cartItems, cartCount, totalPrice, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cartItems, cartCount, totalPrice, updateQuantity, removeFromCart, clearCart, applyCoupon, removeCoupon, appliedCoupon, discountAmount, finalPrice } = useCart();
   const [isCheckout, setIsCheckout] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [notes, setNotes] = useState("");
+  const [couponCode, setCouponCode] = useState("");
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    await applyCoupon(couponCode, restaurantId);
+    setCouponCode("");
+  };
+
   const mutation = useMutation({
     mutationFn: async () => {
-      // 1. Create the order
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .insert({
           restaurant_id: restaurantId,
           customer_name: customerName,
           notes: notes,
-          total_price: totalPrice,
+          total_price: finalPrice,
           status: 'pending',
+          coupon_code: appliedCoupon?.code,
+          discount_amount: discountAmount,
         })
         .select('id')
         .single();
@@ -51,7 +59,6 @@ export function CartSheet({ restaurantId }: CartSheetProps) {
       if (orderError) throw orderError;
       if (!orderData) throw new Error("Failed to create order.");
 
-      // 2. Create order items
       const orderItems = cartItems.map(item => ({
         order_id: orderData.id,
         menu_item_id: item.id,
@@ -122,7 +129,7 @@ export function CartSheet({ restaurantId }: CartSheetProps) {
                 Voltar para o Carrinho
               </Button>
               <Button type="submit" className="w-full custom-primary-bg" disabled={mutation.isPending}>
-                {mutation.isPending ? "Enviando..." : `Enviar Pedido (${formatCurrency(totalPrice)})`}
+                {mutation.isPending ? "Enviando..." : `Enviar Pedido (${formatCurrency(finalPrice)})`}
               </Button>
             </div>
           </form>
@@ -155,9 +162,30 @@ export function CartSheet({ restaurantId }: CartSheetProps) {
             )}
             <SheetFooter className="mt-auto">
               <div className="w-full space-y-2">
+                {!appliedCoupon ? (
+                  <div className="flex gap-2">
+                    <Input placeholder="Código do Cupom" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} />
+                    <Button variant="outline" onClick={handleApplyCoupon}>Aplicar</Button>
+                  </div>
+                ) : (
+                  <div className="text-sm text-green-600 dark:text-green-400 p-2 bg-green-500/10 rounded-md flex justify-between items-center">
+                    <span>Cupom <b>{appliedCoupon.code}</b> aplicado!</span>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={removeCoupon}><XCircle className="h-4 w-4" /></Button>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal:</span>
+                  <span>{formatCurrency(totalPrice)}</span>
+                </div>
+                {appliedCoupon && (
+                  <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                    <span>Desconto:</span>
+                    <span>- {formatCurrency(discountAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total:</span>
-                  <span>{formatCurrency(totalPrice)}</span>
+                  <span>{formatCurrency(finalPrice)}</span>
                 </div>
                 <Button onClick={() => setIsCheckout(true)} className="w-full custom-primary-bg" disabled={cartItems.length === 0}>
                   Finalizar Pedido

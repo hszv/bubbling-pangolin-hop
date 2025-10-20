@@ -12,6 +12,7 @@ import {
   BarChart3,
   Star,
   Bot,
+  Armchair,
 } from "lucide-react";
 import { FeatureGuard } from "./FeatureGuard";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const navItems = [
   { to: "/dashboard", icon: <Home className="h-4 w-4" />, label: "Visão Geral", requiredPlan: "Básico" },
   { to: "/dashboard/menu", icon: <Utensils className="h-4 w-4" />, label: "Cardápio", requiredPlan: "Básico" },
+  { to: "/dashboard/tables", icon: <Armchair className="h-4 w-4" />, label: "Mesas", requiredPlan: "Profissional" },
   { to: "/dashboard/analytics", icon: <BarChart3 className="h-4 w-4" />, label: "Análises", requiredPlan: "Profissional" },
   { to: "/dashboard/orders", icon: <ShoppingCart className="h-4 w-4" />, label: "Pedidos", requiredPlan: "Premium" },
   { to: "/dashboard/reservations", icon: <Calendar className="h-4 w-4" />, label: "Reservas", requiredPlan: "Profissional" },

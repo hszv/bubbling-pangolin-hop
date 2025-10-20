@@ -23,6 +23,7 @@ import PublicMenu from "./pages/PublicMenu";
 import Analytics from "./pages/dashboard/Analytics";
 import Reviews from "./pages/dashboard/Reviews";
 import Bot from "./pages/dashboard/Bot";
+import Tables from "./pages/dashboard/Tables";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => (
             >
               <Route index element={<Overview />} />
               <Route path="menu" element={<Menu />} />
+              <Route path="tables" element={<Tables />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="orders" element={<Orders />} />
               <Route path="reservations" element={<Reservations />} />

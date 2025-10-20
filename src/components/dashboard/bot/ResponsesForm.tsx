@@ -27,9 +27,12 @@ const messageTypes = [
   { type: 'MAIN_MENU', label: 'Menu Principal', description: 'Apresenta as opções principais (ex: "1. Ver Cardápio", "2. Fazer Pedido").' },
   { type: 'ORDER_PROMPT', label: 'Instrução de Pedido', description: 'Instrui o cliente sobre como adicionar itens ou finalizar o pedido.' },
   { type: 'ITEM_ADDED', label: 'Item Adicionado', description: 'Confirmação de item no carrinho. Variáveis: {item_name}, {total_carrinho}.' },
+  { type: 'CHECKOUT_CONFIRMATION', label: 'Confirmação de Checkout', description: 'Pergunta se o cliente tem um cupom. Variáveis: {total_carrinho}.' },
+  { type: 'COUPON_CODE_PROMPT', label: 'Solicitação do Código do Cupom', description: 'Pede para o cliente digitar o código do cupom.' },
+  { type: 'COUPON_APPLIED', label: 'Cupom Aplicado', description: 'Confirma que o cupom foi aplicado com sucesso. Variáveis: {coupon_code}, {final_price}.' },
+  { type: 'COUPON_INVALID', label: 'Cupom Inválido', description: 'Informa que o cupom digitado não é válido.' },
   { type: 'CHECKOUT_NAME_PROMPT', label: 'Solicitação de Nome', description: 'Pede o nome do cliente para finalizar o pedido.' },
   { type: 'ORDER_FINALIZED', label: 'Pedido Finalizado', description: 'Mensagem de agradecimento após a confirmação. Variáveis: {customer_name}.' },
-  { type: 'HELP', label: 'Mensagem de Ajuda', description: 'Instruções de como usar o assistente.' },
   { type: 'ERROR', label: 'Mensagem de Erro', description: 'Quando o assistente não entende o comando.' },
 ];
 

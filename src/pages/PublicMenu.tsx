@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Footer from "@/components/Footer";
 import { useEffect } from "react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { ReservationSheet } from "@/components/public/ReservationSheet";
 
 type MenuItem = {
   id: string;
@@ -136,16 +137,21 @@ const PublicMenu = () => {
           .custom-primary-text { color: var(--custom-primary, hsl(var(--primary))); }
         `}
       </style>
-      <header className="py-8 text-center">
+      <header className="py-8 text-center sticky top-0 bg-background/80 backdrop-blur-sm z-10">
         <div className="container mx-auto px-4">
           {data?.profile.logo_url ? (
-            <img src={data.profile.logo_url} alt={`Logo de ${data.profile.restaurant_name}`} className="h-24 w-24 object-contain mx-auto mb-4 rounded-md" />
+            <img src={data.profile.logo_url} alt={`Logo de ${data.profile.restaurant_name}`} className="h-20 w-20 object-contain mx-auto mb-4 rounded-md" />
           ) : (
-            <div className="mx-auto bg-muted p-4 rounded-full w-fit mb-4">
-              <UtensilsCrossed className="h-12 w-12 text-muted-foreground" />
+            <div className="mx-auto bg-muted p-3 rounded-full w-fit mb-4">
+              <UtensilsCrossed className="h-10 w-10 text-muted-foreground" />
             </div>
           )}
-          <h1 className="text-4xl font-bold tracking-tight">{data?.profile.restaurant_name}</h1>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{data?.profile.restaurant_name}</h1>
+          {userId && (
+            <div className="mt-4">
+              <ReservationSheet restaurantId={userId} />
+            </div>
+          )}
         </div>
       </header>
 

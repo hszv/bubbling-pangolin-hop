@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { UtensilsCrossed } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, FormEvent, useEffect } from "react";
@@ -13,6 +14,7 @@ const Signup = () => {
   const [restaurantName, setRestaurantName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState('Básico');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { session } = useAuth();
@@ -32,6 +34,7 @@ const Signup = () => {
       options: {
         data: {
           restaurant_name: restaurantName,
+          plan: selectedPlan,
         },
       },
     });
@@ -90,6 +93,23 @@ const Signup = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label>Escolha seu Plano</Label>
+                <RadioGroup defaultValue="Básico" value={selectedPlan} onValueChange={setSelectedPlan}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Básico" id="r1" />
+                    <Label htmlFor="r1">Básico</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Profissional" id="r2" />
+                    <Label htmlFor="r2">Profissional</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Premium" id="r3" />
+                    <Label htmlFor="r3">Premium</Label>
+                  </div>
+                </RadioGroup>
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Criando...' : 'Criar minha conta'}

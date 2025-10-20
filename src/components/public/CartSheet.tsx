@@ -21,9 +21,10 @@ import { showError, showSuccess } from "@/utils/toast";
 
 interface CartSheetProps {
   restaurantId: string;
+  restaurantWhatsApp?: string | null;
 }
 
-export function CartSheet({ restaurantId }: CartSheetProps) {
+export function CartSheet({ restaurantId, restaurantWhatsApp }: CartSheetProps) {
   const { cartItems, cartCount, totalPrice, updateQuantity, removeFromCart, clearCart, applyCoupon, removeCoupon, appliedCoupon, discountAmount, finalPrice } = useCart();
   const [isCheckout, setIsCheckout] = useState(false);
   const [customerName, setCustomerName] = useState("");
@@ -71,7 +72,7 @@ export function CartSheet({ restaurantId }: CartSheetProps) {
       if (itemsError) throw itemsError;
     },
     onSuccess: () => {
-      showSuccess("Pedido enviado com sucesso!");
+      showSuccess("Pedido salvo com sucesso!");
       clearCart();
       setIsCheckout(false);
       setCustomerName("");
@@ -82,13 +83,41 @@ export function CartSheet({ restaurantId }: CartSheetProps) {
     },
   });
 
-  const handleSubmitOrder = (e: React.FormEvent) => {
+  const handleSendToWhatsApp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName) {
       showError("Por favor, informe seu nome.");
       return;
     }
-    mutation.mutate();
+    if (!restaurantWhatsApp) {
+      showError("Este restaurante não configurou um número de WhatsApp para pedidos.");
+      return;
+    }
+
+    try {
+      await mutation.mutateAsync();
+
+      let message = `Olá! Gostaria de fazer um novo pedido.\n\n`;
+      message += `*Cliente:* ${customerName}\n\n`;
+      message += `*Itens do Pedido:*\n`;
+      cartItems.forEach(item => {
+        message += `- ${item.quantity}x ${item.name} (${formatCurrency(item.price * item.quantity)})\n`;
+      });
+      message += `\n*Subtotal:* ${formatCurrency(totalPrice)}\n`;
+      if (appliedCoupon) {
+        message += `*Desconto (${appliedCoupon.code}):* -${formatCurrency(discountAmount)}\n`;
+      }
+      message += `*Total:* *${formatCurrency(finalPrice)}*\n\n`;
+      if (notes) {
+        message += `*Observações:* ${notes}\n`;
+      }
+      
+      const whatsappUrl = `https://wa.me/${restaurantWhatsApp.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+      window.location.href = whatsappUrl;
+
+    } catch (error) {
+      // O erro já é tratado pelo onError da mutação
+    }
   };
 
   return (
@@ -113,7 +142,7 @@ export function CartSheet({ restaurantId }: CartSheetProps) {
         </SheetHeader>
         
         {isCheckout ? (
-          <form onSubmit={handleSubmitOrder} className="flex-grow flex flex-col">
+          <form onSubmit={handleSendToWhatsApp} className="flex-grow flex flex-col">
             <div className="space-y-4 py-4">
               <div>
                 <Label htmlFor="name">Seu Nome</Label>
@@ -129,7 +158,7 @@ export function CartSheet({ restaurantId }: CartSheetProps) {
                 Voltar para o Carrinho
               </Button>
               <Button type="submit" className="w-full custom-primary-bg" disabled={mutation.isPending}>
-                {mutation.isPending ? "Enviando..." : `Enviar Pedido (${formatCurrency(finalPrice)})`}
+                {mutation.isPending ? "Enviando..." : `Enviar via WhatsApp (${formatCurrency(finalPrice)})`}
               </Button>
             </div>
           </form>

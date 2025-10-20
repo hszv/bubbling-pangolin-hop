@@ -197,7 +197,7 @@ const MenuContent = () => {
       )}
 
       {data?.profile.whatsapp_number && <WhatsAppButton phoneNumber={data.profile.whatsapp_number} />}
-      {userId && canOrder && <CartSheet restaurantId={userId} />}
+      {userId && canOrder && <CartSheet restaurantId={userId} restaurantWhatsApp={data?.profile.whatsapp_number} />}
       <Footer />
     </div>
   );

@@ -17,6 +17,7 @@ import Orders from "./pages/dashboard/Orders";
 import Reservations from "./pages/dashboard/Reservations";
 import Coupons from "./pages/dashboard/Coupons";
 import Banners from "./pages/dashboard/Banners";
+import Alerts from "./pages/dashboard/Alerts";
 import Settings from "./pages/dashboard/Settings";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import PublicMenu from "./pages/PublicMenu";
@@ -59,6 +60,7 @@ const App = () => (
               <Route path="reservations" element={<Reservations />} />
               <Route path="coupons" element={<Coupons />} />
               <Route path="banners" element={<Banners />} />
+              <Route path="alerts" element={<Alerts />} />
               <Route path="reviews" element={<Reviews />} />
               <Route path="surveys" element={<Surveys />} />
               <Route path="bot" element={<Bot />} />

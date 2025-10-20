@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ReviewSheet } from "@/components/public/ReviewSheet";
 import { FloatingActionMenu } from "@/components/public/FloatingActionMenu";
 import { SurveyToast } from "@/components/public/SurveyToast";
+import { PromotionalAlert } from "@/components/public/PromotionalAlert";
 
 type MenuItem = {
   id: string;
@@ -29,6 +30,13 @@ type Banner = {
   title: string;
   description: string | null;
   image_url: string;
+  link_url: string | null;
+};
+
+type PromotionalAlertData = {
+  title: string;
+  description: string | null;
+  image_url: string | null;
   link_url: string | null;
 };
 
@@ -76,16 +84,17 @@ const MenuContent = () => {
     const bannersPromise = supabase.from("banners").select("id, title, description, image_url, link_url").eq("user_id", userId).eq("is_active", true).order("created_at", { ascending: false });
     const reviewsPromise = supabase.from("reviews").select("id, rating, comment, reviewer_name, created_at").eq("restaurant_id", userId).order("created_at", { ascending: false });
     const surveyPromise = supabase.from("surveys").select("id, question").eq("restaurant_id", userId).eq("is_active", true).limit(1).single<Survey>();
+    const alertPromise = supabase.from("promotional_alerts").select("title, description, image_url, link_url").eq("user_id", userId).eq("is_active", true).order("created_at", { ascending: false }).limit(1).single<PromotionalAlertData>();
 
-    const [{ data: profile, error: profileError }, { data: menuItems, error: menuItemsError }, { data: banners, error: bannersError }, { data: reviews, error: reviewsError }, { data: survey, error: surveyError }] = await Promise.all([profilePromise, menuItemsPromise, bannersPromise, reviewsPromise, surveyPromise]);
+    const [{ data: profile, error: profileError }, { data: menuItems, error: menuItemsError }, { data: banners, error: bannersError }, { data: reviews, error: reviewsError }, { data: survey, error: surveyError }, { data: alert, error: alertError }] = await Promise.all([profilePromise, menuItemsPromise, bannersPromise, reviewsPromise, surveyPromise, alertPromise]);
 
     if (profileError) throw new Error("Restaurante não encontrado.");
     if (menuItemsError) throw new Error("Não foi possível carregar o cardápio.");
     if (bannersError) throw new Error("Não foi possível carregar os banners.");
     if (reviewsError) throw new Error("Não foi possível carregar as avaliações.");
-    // surveyError is not critical, so we don't throw an error for it
+    // surveyError and alertError are not critical
 
-    return { profile, menuItems, banners, reviews, survey };
+    return { profile, menuItems, banners, reviews, survey, alert };
   };
 
   const { data, isLoading, error } = useQuery({
@@ -210,6 +219,7 @@ const MenuContent = () => {
         />
       )}
       {data?.survey && <SurveyToast survey={data.survey} />}
+      {data?.alert && <PromotionalAlert alert={data.alert} />}
       <Footer />
     </div>
   );

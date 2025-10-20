@@ -22,6 +22,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import PublicMenu from "./pages/PublicMenu";
 import Analytics from "./pages/dashboard/Analytics";
 import Reviews from "./pages/dashboard/Reviews";
+import Bot from "./pages/dashboard/Bot";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="coupons" element={<Coupons />} />
               <Route path="banners" element={<Banners />} />
               <Route path="reviews" element={<Reviews />} />
+              <Route path="bot" element={<Bot />} />
               <Route path="settings" element={<Settings />} />
             </Route>
 

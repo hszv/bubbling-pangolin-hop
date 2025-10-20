@@ -14,6 +14,7 @@ import {
   Bot,
   Armchair,
   ChefHat,
+  MessageSquareQuote,
 } from "lucide-react";
 import { FeatureGuard } from "./FeatureGuard";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,6 +30,7 @@ const navItems = [
   { to: "/dashboard/coupons", icon: <Ticket className="h-4 w-4" />, label: "Cupons", requiredPlan: "Profissional" },
   { to: "/dashboard/banners", icon: <Image className="h-4 w-4" />, label: "Banners", requiredPlan: "Profissional" },
   { to: "/dashboard/reviews", icon: <Star className="h-4 w-4" />, label: "Avaliações", requiredPlan: "Profissional" },
+  { to: "/dashboard/surveys", icon: <MessageSquareQuote className="h-4 w-4" />, label: "Pesquisas", requiredPlan: "Profissional" },
   { to: "/dashboard/bot", icon: <Bot className="h-4 w-4" />, label: "Assistente Virtual", requiredPlan: "Premium" },
   { to: "/dashboard/settings", icon: <Settings className="h-4 w-4" />, label: "Configurações", requiredPlan: "Básico" },
 ];

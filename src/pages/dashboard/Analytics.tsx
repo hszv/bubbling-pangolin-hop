@@ -12,6 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tooltip as ShadTooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/contexts/AuthContext";
+import { ItemPopularityAnalytics } from "@/components/dashboard/analytics/ItemPopularityAnalytics";
+import { Separator } from "@/components/ui/separator";
 
 type AnalyticsEvent = {
   event_type: string;
@@ -58,15 +60,8 @@ const OverviewAnalytics = () => {
       return acc;
     }, {} as Record<string, number>);
 
-    const clicksByItem = analytics.filter(e => e.event_type === "item_click" && e.metadata?.item_id).reduce((acc, curr) => {
-      const itemName = "Item " + curr.metadata!.item_id.substring(0, 6);
-      acc[itemName] = (acc[itemName] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
     return {
       views: Object.entries(viewsByDay).map(([name, views]) => ({ name, views })).reverse(),
-      clicks: Object.entries(clicksByItem).map(([name, clicks]) => ({ name, clicks })).sort((a, b) => b.clicks - a.clicks).slice(0, 10),
     };
   }, [analytics]);
 
@@ -74,9 +69,29 @@ const OverviewAnalytics = () => {
   if (error) return <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Erro</AlertTitle><AlertDescription>Não foi possível carregar os dados de visualização.</AlertDescription></Alert>;
 
   return (
-    <div className="grid md:grid-cols-2 gap-6 mt-6">
-      <Card><CardHeader><CardTitle>Visualizações do Cardápio (Últimos 30 dias)</CardTitle></CardHeader><CardContent>{processedData.views.length > 0 ? (<ResponsiveContainer width="100%" height={300}><BarChart data={processedData.views}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" /><YAxis /><Tooltip /><Bar dataKey="views" fill="hsl(var(--primary))" name="Visualizações" /></BarChart></ResponsiveContainer>) : <p className="text-muted-foreground text-center py-12">Nenhuma visualização registrada.</p>}</CardContent></Card>
-      <Card><CardHeader><CardTitle>Itens Mais Clicados (Top 10)</CardTitle></CardHeader><CardContent>{processedData.clicks.length > 0 ? (<ResponsiveContainer width="100%" height={300}><BarChart data={processedData.clicks} layout="vertical"><CartesianGrid strokeDasharray="3 3" /><XAxis type="number" /><YAxis type="category" dataKey="name" width={80} /><Tooltip /><Bar dataKey="clicks" fill="hsl(var(--primary))" name="Cliques" /></BarChart></ResponsiveContainer>) : <p className="text-muted-foreground text-center py-12">Nenhum clique registrado.</p>}</CardContent></Card>
+    <div className="space-y-6 mt-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Visualizações do Cardápio (Últimos 30 dias)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {processedData.views.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={processedData.views}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="views" fill="hsl(var(--primary))" name="Visualizações" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-muted-foreground text-center py-12">Nenhuma visualização registrada.</p>
+          )}
+        </CardContent>
+      </Card>
+      <Separator />
+      <ItemPopularityAnalytics />
     </div>
   );
 };

@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UtensilsCrossed, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Footer from "@/components/Footer";
 import { useEffect } from "react";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 type MenuItem = {
   id: string;
@@ -15,6 +16,14 @@ type MenuItem = {
   price: number;
   category: string | null;
   image_url: string | null;
+};
+
+type Banner = {
+  id: string;
+  title: string;
+  description: string | null;
+  image_url: string;
+  link_url: string | null;
 };
 
 type Profile = {
@@ -29,23 +38,32 @@ const PublicMenu = () => {
   const fetchMenuData = async () => {
     if (!userId) throw new Error("ID do restaurante não fornecido.");
 
-    const { data: profile, error: profileError } = await supabase
+    const profilePromise = supabase
       .from("profiles")
       .select("restaurant_name, logo_url, primary_color")
       .eq("id", userId)
       .single<Profile>();
 
-    if (profileError) throw new Error("Restaurante não encontrado.");
-
-    const { data: menuItems, error: menuItemsError } = await supabase
+    const menuItemsPromise = supabase
       .from("menu_items")
       .select("id, name, description, price, category, image_url")
       .eq("user_id", userId)
       .order("category");
+      
+    const bannersPromise = supabase
+      .from("banners")
+      .select("id, title, description, image_url, link_url")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
 
+    const [{ data: profile, error: profileError }, { data: menuItems, error: menuItemsError }, { data: banners, error: bannersError }] = await Promise.all([profilePromise, menuItemsPromise, bannersPromise]);
+
+    if (profileError) throw new Error("Restaurante não encontrado.");
     if (menuItemsError) throw new Error("Não foi possível carregar o cardápio.");
+    if (bannersError) throw new Error("Não foi possível carregar os banners.");
 
-    return { profile, menuItems };
+    return { profile, menuItems, banners };
   };
 
   const { data, isLoading, error } = useQuery({
@@ -84,17 +102,12 @@ const PublicMenu = () => {
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
         <Skeleton className="h-24 w-24 rounded-full mx-auto mb-4" />
         <Skeleton className="h-8 w-1/2 mx-auto mb-8" />
+        <Skeleton className="h-64 w-full mb-8" />
         <div className="space-y-8">
           <div>
             <Skeleton className="h-6 w-1/4 mb-4" />
             <div className="grid md:grid-cols-2 gap-4">
               <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-          </div>
-          <div>
-            <Skeleton className="h-6 w-1/4 mb-4" />
-            <div className="grid md:grid-cols-2 gap-4">
               <Skeleton className="h-32 w-full" />
             </div>
           </div>
@@ -137,6 +150,28 @@ const PublicMenu = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {data?.banners && data.banners.length > 0 && (
+          <section className="mb-12">
+            <Carousel className="w-full max-w-4xl mx-auto">
+              <CarouselContent>
+                {data.banners.map((banner) => (
+                  <CarouselItem key={banner.id}>
+                    <a href={banner.link_url || '#'} target="_blank" rel="noopener noreferrer" className="block">
+                      <Card className="overflow-hidden">
+                        <CardContent className="p-0">
+                          <img src={banner.image_url} alt={banner.title} className="w-full aspect-[3/1] object-cover" />
+                        </CardContent>
+                      </Card>
+                    </a>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+          </section>
+        )}
+
         {groupedMenu && Object.keys(groupedMenu).length > 0 ? (
           <div className="space-y-12">
             {Object.entries(groupedMenu).map(([category, items]) => (
@@ -149,7 +184,7 @@ const PublicMenu = () => {
                     <Card key={item.id} className="overflow-hidden">
                       <div className="flex">
                         <div className="flex-grow p-4">
-                          <CardTitle className="text-lg mb-1">{item.name}</CardTitle>
+                          <h3 className="text-lg font-semibold mb-1">{item.name}</h3>
                           {item.description && (
                             <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
                           )}

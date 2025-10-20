@@ -13,6 +13,7 @@ import { CartProvider, useCart } from "@/contexts/CartContext";
 import { Button } from "@/components/ui/button";
 import { ReviewSheet } from "@/components/public/ReviewSheet";
 import { FloatingActionMenu } from "@/components/public/FloatingActionMenu";
+import { SurveyToast } from "@/components/public/SurveyToast";
 
 type MenuItem = {
   id: string;
@@ -37,6 +38,11 @@ type Review = {
   comment: string | null;
   reviewer_name: string;
   created_at: string;
+};
+
+type Survey = {
+  id: string;
+  question: string;
 };
 
 type Profile = {
@@ -69,15 +75,17 @@ const MenuContent = () => {
     const menuItemsPromise = supabase.from("menu_items").select("id, name, description, price, category, image_url").eq("user_id", userId).order("category");
     const bannersPromise = supabase.from("banners").select("id, title, description, image_url, link_url").eq("user_id", userId).eq("is_active", true).order("created_at", { ascending: false });
     const reviewsPromise = supabase.from("reviews").select("id, rating, comment, reviewer_name, created_at").eq("restaurant_id", userId).order("created_at", { ascending: false });
+    const surveyPromise = supabase.from("surveys").select("id, question").eq("restaurant_id", userId).eq("is_active", true).limit(1).single<Survey>();
 
-    const [{ data: profile, error: profileError }, { data: menuItems, error: menuItemsError }, { data: banners, error: bannersError }, { data: reviews, error: reviewsError }] = await Promise.all([profilePromise, menuItemsPromise, bannersPromise, reviewsPromise]);
+    const [{ data: profile, error: profileError }, { data: menuItems, error: menuItemsError }, { data: banners, error: bannersError }, { data: reviews, error: reviewsError }, { data: survey, error: surveyError }] = await Promise.all([profilePromise, menuItemsPromise, bannersPromise, reviewsPromise, surveyPromise]);
 
     if (profileError) throw new Error("Restaurante não encontrado.");
     if (menuItemsError) throw new Error("Não foi possível carregar o cardápio.");
     if (bannersError) throw new Error("Não foi possível carregar os banners.");
     if (reviewsError) throw new Error("Não foi possível carregar as avaliações.");
+    // surveyError is not critical, so we don't throw an error for it
 
-    return { profile, menuItems, banners, reviews };
+    return { profile, menuItems, banners, reviews, survey };
   };
 
   const { data, isLoading, error } = useQuery({
@@ -201,6 +209,7 @@ const MenuContent = () => {
           restaurantWhatsApp={data?.profile.whatsapp_number} 
         />
       )}
+      {data?.survey && <SurveyToast survey={data.survey} />}
       <Footer />
     </div>
   );

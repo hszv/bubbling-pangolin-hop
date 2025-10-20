@@ -9,6 +9,7 @@ import {
   Image,
   Settings,
   Shield,
+  BarChart3,
 } from "lucide-react";
 import { FeatureGuard } from "./FeatureGuard";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const navItems = [
   { to: "/dashboard", icon: <Home className="h-4 w-4" />, label: "Visão Geral", requiredPlan: "Básico" },
   { to: "/dashboard/menu", icon: <Utensils className="h-4 w-4" />, label: "Cardápio", requiredPlan: "Básico" },
+  { to: "/dashboard/analytics", icon: <BarChart3 className="h-4 w-4" />, label: "Análises", requiredPlan: "Profissional" },
   { to: "/dashboard/orders", icon: <ShoppingCart className="h-4 w-4" />, label: "Pedidos", requiredPlan: "Premium" },
   { to: "/dashboard/reservations", icon: <Calendar className="h-4 w-4" />, label: "Reservas", requiredPlan: "Profissional" },
   { to: "/dashboard/coupons", icon: <Ticket className="h-4 w-4" />, label: "Cupons", requiredPlan: "Profissional" },

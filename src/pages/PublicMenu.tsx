@@ -73,6 +73,30 @@ const PublicMenu = () => {
     enabled: !!userId,
   });
 
+  // Log menu view
+  useEffect(() => {
+    if (userId) {
+      const logView = async () => {
+        await supabase.from('menu_analytics').insert({
+          restaurant_id: userId,
+          event_type: 'menu_view',
+        });
+      };
+      logView();
+    }
+  }, [userId]);
+
+  // Log item click
+  const handleItemClick = async (itemId: string) => {
+    if (userId) {
+      await supabase.from('menu_analytics').insert({
+        restaurant_id: userId,
+        event_type: 'item_click',
+        metadata: { item_id: itemId },
+      });
+    }
+  };
+
   useEffect(() => {
     if (data?.profile.primary_color) {
       document.documentElement.style.setProperty('--custom-primary', data.profile.primary_color);
@@ -187,7 +211,7 @@ const PublicMenu = () => {
                 </h2>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {items.map((item) => (
-                    <Card key={item.id} className="overflow-hidden">
+                    <Card key={item.id} className="overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary" onClick={() => handleItemClick(item.id)}>
                       <div className="flex">
                         <div className="flex-grow p-4">
                           <h3 className="text-lg font-semibold mb-1">{item.name}</h3>

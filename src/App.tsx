@@ -20,6 +20,7 @@ import Banners from "./pages/dashboard/Banners";
 import Settings from "./pages/dashboard/Settings";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import PublicMenu from "./pages/PublicMenu";
+import Analytics from "./pages/dashboard/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
             >
               <Route index element={<Overview />} />
               <Route path="menu" element={<Menu />} />
+              <Route path="analytics" element={<Analytics />} />
               <Route path="orders" element={<Orders />} />
               <Route path="reservations" element={<Reservations />} />
               <Route path="coupons" element={<Coupons />} />

@@ -6,25 +6,26 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Trash2, Plus, Minus, XCircle } from "lucide-react";
+import { Trash2, Plus, Minus, XCircle } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { showError, showSuccess } from "@/utils/toast";
 
 interface CartSheetProps {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
   restaurantId: string;
   restaurantWhatsApp?: string | null;
 }
 
-export function CartSheet({ restaurantId, restaurantWhatsApp }: CartSheetProps) {
+export function CartSheet({ isOpen, onOpenChange, restaurantId, restaurantWhatsApp }: CartSheetProps) {
   const { cartItems, cartCount, totalPrice, updateQuantity, removeFromCart, clearCart, applyCoupon, removeCoupon, appliedCoupon, discountAmount, finalPrice } = useCart();
   const [isCheckout, setIsCheckout] = useState(false);
   const [customerName, setCustomerName] = useState("");
@@ -119,20 +120,16 @@ export function CartSheet({ restaurantId, restaurantWhatsApp }: CartSheetProps) 
       // O erro já é tratado pelo onError da mutação
     }
   };
+  
+  const handleSheetOpenChange = (open: boolean) => {
+    if (!open) {
+      setIsCheckout(false);
+    }
+    onOpenChange(open);
+  };
 
   return (
-    <Sheet onOpenChange={(open) => !open && setIsCheckout(false)}>
-      <SheetTrigger asChild>
-        <Button className="fixed bottom-6 right-6 rounded-full h-16 w-16 shadow-lg custom-primary-bg z-20">
-          <ShoppingCart className="h-7 w-7" />
-          {cartCount > 0 && (
-            <Badge variant="destructive" className="absolute top-0 right-0">
-              {cartCount}
-            </Badge>
-          )}
-          <span className="sr-only">Abrir carrinho</span>
-        </Button>
-      </SheetTrigger>
+    <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
       <SheetContent className="flex flex-col">
         <SheetHeader>
           <SheetTitle>{isCheckout ? "Finalizar Pedido" : "Seu Carrinho"}</SheetTitle>

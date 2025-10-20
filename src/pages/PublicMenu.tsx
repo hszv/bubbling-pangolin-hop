@@ -10,10 +10,9 @@ import { useEffect } from "react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { ReservationSheet } from "@/components/public/ReservationSheet";
 import { CartProvider, useCart } from "@/contexts/CartContext";
-import { CartSheet } from "@/components/public/CartSheet";
 import { Button } from "@/components/ui/button";
 import { ReviewSheet } from "@/components/public/ReviewSheet";
-import { WhatsAppButton } from "@/components/public/WhatsAppButton";
+import { FloatingActionMenu } from "@/components/public/FloatingActionMenu";
 
 type MenuItem = {
   id: string;
@@ -196,8 +195,12 @@ const MenuContent = () => {
         </section>
       )}
 
-      {data?.profile.whatsapp_number && <WhatsAppButton phoneNumber={data.profile.whatsapp_number} />}
-      {userId && canOrder && <CartSheet restaurantId={userId} restaurantWhatsApp={data?.profile.whatsapp_number} />}
+      {userId && (canOrder || data?.profile.whatsapp_number) && (
+        <FloatingActionMenu 
+          restaurantId={userId} 
+          restaurantWhatsApp={data?.profile.whatsapp_number} 
+        />
+      )}
       <Footer />
     </div>
   );

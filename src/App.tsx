@@ -24,6 +24,7 @@ import Analytics from "./pages/dashboard/Analytics";
 import Reviews from "./pages/dashboard/Reviews";
 import Bot from "./pages/dashboard/Bot";
 import Tables from "./pages/dashboard/Tables";
+import Kitchen from "./pages/dashboard/Kitchen";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="tables" element={<Tables />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="orders" element={<Orders />} />
+              <Route path="kitchen" element={<Kitchen />} />
               <Route path="reservations" element={<Reservations />} />
               <Route path="coupons" element={<Coupons />} />
               <Route path="banners" element={<Banners />} />

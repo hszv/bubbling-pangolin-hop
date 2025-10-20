@@ -1,8 +1,13 @@
 import { UtensilsCrossed } from "lucide-react";
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserNav } from "./UserNav";
+import { Skeleton } from "./ui/skeleton";
 
 const Header = () => {
+  const { session, loading } = useAuth();
+
   return (
     <header className="py-4 px-4 sm:px-6 lg:px-8 border-b border-border/40">
       <div className="container mx-auto flex justify-between items-center">
@@ -19,12 +24,20 @@ const Header = () => {
           </a>
         </nav>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" asChild>
-            <Link to="/login">Login</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/signup">Começar Agora</Link>
-          </Button>
+          {loading ? (
+            <Skeleton className="h-10 w-24" />
+          ) : session ? (
+            <UserNav />
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/signup">Começar Agora</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>

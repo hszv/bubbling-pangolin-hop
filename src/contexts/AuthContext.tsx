@@ -1,15 +1,16 @@
-import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import { createContext, useState, useEffect, useContext, ReactNode, useCallback } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
-// Definindo o tipo do perfil para clareza
 type UserProfile = {
   id: string;
   restaurant_name: string;
   plan: "Básico" | "Profissional" | "Premium";
   role: "user" | "admin";
-  // Adicione outros campos do perfil aqui se necessário
+  logo_url?: string;
+  primary_color?: string;
+  whatsapp_number?: string;
 };
 
 interface AuthContextType {
@@ -17,6 +18,7 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
+  refetchProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,25 +30,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (profileData) {
+      setProfile(profileData);
+    } else if (profileError) {
+      console.error("Erro ao buscar perfil:", profileError.message);
+      setProfile(null);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchSessionAndProfile = async () => {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
         setSession(session);
         setUser(session.user);
-        
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profileData) {
-          setProfile(profileData);
-        } else if (profileError) {
-          console.error("Erro ao buscar perfil:", profileError.message);
-        }
+        await fetchProfile(session.user.id);
       }
       setLoading(false);
     };
@@ -58,12 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
 
       if (event === 'SIGNED_IN' && session) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        setProfile(profileData);
+        await fetchProfile(session.user.id);
         navigate('/dashboard');
       }
       
@@ -71,19 +72,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setProfile(null);
         navigate('/login');
       }
-      setLoading(false);
+      if (event !== 'INITIAL_SESSION') {
+        setLoading(false);
+      }
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, fetchProfile]);
+
+  const refetchProfile = useCallback(async () => {
+    if (user) {
+      await fetchProfile(user.id);
+    }
+  }, [user, fetchProfile]);
 
   const value = {
     session,
     user,
     profile,
     loading,
+    refetchProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

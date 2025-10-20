@@ -70,6 +70,16 @@ const Settings = () => {
     mutation.mutate(values);
   };
 
+  const handleManageSubscription = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-portal-link');
+      if (error) throw error;
+      window.location.href = data.url;
+    } catch (error) {
+      showError(`Erro ao abrir portal: ${error.message}`);
+    }
+  };
+
   if (loading) {
     return (
       <div>
@@ -81,83 +91,51 @@ const Settings = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold tracking-tight mb-6">
-        Configurações
-      </h1>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+      <h1 className="text-3xl font-bold tracking-tight mb-6">Configurações</h1>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <Card>
+              <CardHeader>
+                <CardTitle>Perfil do Restaurante</CardTitle>
+                <CardDescription>Personalize as informações e a aparência do seu cardápio.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <FormField control={form.control} name="restaurant_name" render={({ field }) => (<FormItem><FormLabel>Nome do Restaurante</FormLabel><FormControl><Input placeholder="Pizzaria do Sabor" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="logo_url" render={({ field }) => (<FormItem><FormLabel>URL do Logotipo</FormLabel><FormControl><Input placeholder="https://exemplo.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="primary_color" render={({ field }) => (<FormItem><FormLabel>Cor Principal</FormLabel><div className="flex items-center gap-2"><FormControl><Input type="color" className="w-12 h-10 p-1" {...field} /></FormControl><Input placeholder="#FFFFFF" {...field} /></div><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="whatsapp_number" render={({ field }) => (<FormItem><FormLabel>Número do WhatsApp</FormLabel><FormControl><Input placeholder="5511999998888" {...field} /></FormControl><FormMessage /></FormItem>)} />
+              </CardContent>
+              <CardFooter className="border-t px-6 py-4">
+                <Button type="submit" disabled={mutation.isPending}>{mutation.isPending ? "Salvando..." : "Salvar Alterações"}</Button>
+              </CardFooter>
+            </Card>
+          </form>
+        </Form>
+        <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Perfil do Restaurante</CardTitle>
-              <CardDescription>
-                Personalize as informações e a aparência do seu cardápio.
-              </CardDescription>
+              <CardTitle>Assinatura</CardTitle>
+              <CardDescription>Gerencie seu plano e informações de pagamento.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <FormField
-                control={form.control}
-                name="restaurant_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome do Restaurante</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Pizzaria do Sabor" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="logo_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>URL do Logotipo</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://exemplo.com/logo.png" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="primary_color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cor Principal</FormLabel>
-                    <div className="flex items-center gap-2">
-                      <FormControl>
-                        <Input type="color" className="w-12 h-10 p-1" {...field} />
-                      </FormControl>
-                      <Input placeholder="#FFFFFF" {...field} />
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="whatsapp_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Número do WhatsApp</FormLabel>
-                    <FormControl>
-                      <Input placeholder="5511999998888" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <CardContent>
+              <p>Seu plano atual: <strong>{profile?.plan}</strong></p>
+              {profile?.subscription_renews_at && (
+                <p className="text-sm text-muted-foreground">
+                  Sua assinatura renova em {new Date(profile.subscription_renews_at).toLocaleDateString('pt-BR')}.
+                </p>
+              )}
             </CardContent>
             <CardFooter className="border-t px-6 py-4">
-              <Button type="submit" disabled={mutation.isPending}>
-                {mutation.isPending ? "Salvando..." : "Salvar Alterações"}
-              </Button>
+              {profile?.plan !== 'Básico' ? (
+                <Button onClick={handleManageSubscription}>Gerenciar Assinatura</Button>
+              ) : (
+                <p className="text-sm text-muted-foreground">Faça upgrade para gerenciar uma assinatura.</p>
+              )}
             </CardFooter>
           </Card>
-        </form>
-      </Form>
+        </div>
+      </div>
     </div>
   );
 };

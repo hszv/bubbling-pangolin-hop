@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -19,12 +20,15 @@ import type { Order } from "@/pages/dashboard/Orders";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { showError, showSuccess } from "@/utils/toast";
+import { OrderDetailsDialog } from "./OrderDetailsDialog";
 
 interface OrdersTableProps {
   orders: Order[];
 }
 
 export function OrdersTable({ orders }: OrdersTableProps) {
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -46,6 +50,11 @@ export function OrdersTable({ orders }: OrdersTableProps) {
 
   const handleStatusChange = (orderId: string, status: string) => {
     mutation.mutate({ orderId, status });
+  };
+
+  const handleViewDetails = (order: Order) => {
+    setSelectedOrder(order);
+    setIsDetailsOpen(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -77,61 +86,71 @@ export function OrdersTable({ orders }: OrdersTableProps) {
   };
 
   return (
-    <div className="rounded-lg border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Cliente</TableHead>
-            <TableHead>Data</TableHead>
-            <TableHead>Total</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {orders.length > 0 ? (
-            orders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell className="font-medium">{order.customer_name}</TableCell>
-                <TableCell>{formatDate(order.created_at)}</TableCell>
-                <TableCell>{formatCurrency(order.total_price)}</TableCell>
-                <TableCell>
-                  <Badge variant={getStatusVariant(order.status)}>
-                    {order.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleStatusChange(order.id, 'in_progress')}>
-                        Marcar como "Em Preparo"
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleStatusChange(order.id, 'completed')}>
-                        Marcar como "Concluído"
-                      </DropdownMenuItem>
-                       <DropdownMenuItem onClick={() => handleStatusChange(order.id, 'cancelled')}>
-                        Cancelar Pedido
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+    <>
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead>Total</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {orders.length > 0 ? (
+              orders.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell className="font-medium">{order.customer_name}</TableCell>
+                  <TableCell>{formatDate(order.created_at)}</TableCell>
+                  <TableCell>{formatCurrency(order.total_price)}</TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(order.status)}>
+                      {order.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleViewDetails(order)}>
+                          Ver Detalhes
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange(order.id, 'in_progress')}>
+                          Marcar como "Em Preparo"
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange(order.id, 'completed')}>
+                          Marcar como "Concluído"
+                        </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => handleStatusChange(order.id, 'cancelled')}>
+                          Cancelar Pedido
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center">
+                  Nenhum pedido encontrado.
                 </TableCell>
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center">
-                Nenhum pedido encontrado.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <OrderDetailsDialog 
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+        order={selectedOrder}
+      />
+    </>
   );
 }

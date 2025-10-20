@@ -45,6 +45,13 @@ export function UserNav() {
         <DropdownMenuItem asChild>
           <Link to="/dashboard">Dashboard</Link>
         </DropdownMenuItem>
+        {user && (
+          <DropdownMenuItem asChild>
+            <a href={`/menu/${user.id}`} target="_blank" rel="noopener noreferrer">
+              Ver Meu Cardápio
+            </a>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem disabled>Configurações</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>

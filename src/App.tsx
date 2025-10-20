@@ -19,6 +19,7 @@ import Coupons from "./pages/dashboard/Coupons";
 import Banners from "./pages/dashboard/Banners";
 import Settings from "./pages/dashboard/Settings";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import PublicMenu from "./pages/PublicMenu";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/menu/:userId" element={<PublicMenu />} />
             
             <Route
               path="/dashboard"

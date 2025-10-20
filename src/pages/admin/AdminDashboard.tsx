@@ -1,21 +1,58 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { EditUserSheet } from "@/components/admin/EditUserSheet";
+
+type UserProfile = {
+  id: string;
+  restaurant_name: string;
+  email: string;
+  plan: string;
+  created_at: string;
+  subscription_renews_at: string;
+};
 
 const AdminDashboard = () => {
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+
   const fetchAllUsers = async () => {
     const { data, error } = await supabase.rpc('get_all_user_profiles');
     if (error) throw error;
     return data;
   };
 
-  const { data: users, isLoading, error } = useQuery({
+  const { data: users, isLoading, error } = useQuery<UserProfile[]>({
     queryKey: ["allUsers"],
     queryFn: fetchAllUsers,
   });
+
+  const handleEdit = (user: UserProfile) => {
+    setSelectedUser(user);
+    setIsSheetOpen(true);
+  };
+
+  const handleSheetClose = () => {
+    setIsSheetOpen(false);
+    setSelectedUser(null);
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("pt-BR");
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -45,7 +82,8 @@ const AdminDashboard = () => {
                 <TableHead>Restaurante</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Plano</TableHead>
-                <TableHead>Data de Cadastro</TableHead>
+                <TableHead>Renovação</TableHead>
+                <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -56,13 +94,31 @@ const AdminDashboard = () => {
                   <TableCell>
                     <Badge>{user.plan}</Badge>
                   </TableCell>
-                  <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell>{formatDate(user.subscription_renews_at)}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(user)}>Editar</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
       )}
+      <EditUserSheet 
+        isOpen={isSheetOpen}
+        onClose={handleSheetClose}
+        user={selectedUser}
+      />
     </div>
   );
 };

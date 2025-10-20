@@ -94,9 +94,8 @@ export function ResponsesForm() {
       <CardHeader>
         <CardTitle>Mensagens do Assistente</CardTitle>
         <CardDescription>
-          Use variáveis como `
-          {'{restaurant_name}'}` ou `
-          {'{customer_name}'}` que serão substituídas automaticamente.
+          Personalize as respostas do seu bot. Use variáveis como `
+          {'{restaurant_name}'}` que serão substituídas. Para o Menu Principal, instrua os clientes a responder com números ou palavras-chave (ex: '1. Ver Cardápio', '2. Fazer Pedido').
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -28,6 +28,7 @@ import Tables from "./pages/dashboard/Tables";
 import Kitchen from "./pages/dashboard/Kitchen";
 import Surveys from "./pages/dashboard/Surveys";
 import Team from "./pages/dashboard/Team";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/menu/:userId" element={<PublicMenu />} />
+            <Route path="/menu/payment-success" element={<PaymentSuccess />} />
             
             <Route
               path="/dashboard"

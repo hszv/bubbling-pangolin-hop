@@ -9,9 +9,10 @@ import { CartSheet } from './CartSheet';
 interface FloatingActionMenuProps {
   restaurantId: string;
   restaurantWhatsApp?: string | null;
+  allowOnlinePayment: boolean;
 }
 
-export function FloatingActionMenu({ restaurantId, restaurantWhatsApp }: FloatingActionMenuProps) {
+export function FloatingActionMenu({ restaurantId, restaurantWhatsApp, allowOnlinePayment }: FloatingActionMenuProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { cartCount } = useCart();
 
@@ -53,6 +54,7 @@ export function FloatingActionMenu({ restaurantId, restaurantWhatsApp }: Floatin
         onOpenChange={setIsCartOpen}
         restaurantId={restaurantId}
         restaurantWhatsApp={restaurantWhatsApp}
+        allowOnlinePayment={allowOnlinePayment}
       />
     </>
   );

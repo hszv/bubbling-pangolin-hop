@@ -216,6 +216,7 @@ const MenuContent = () => {
         <FloatingActionMenu 
           restaurantId={userId} 
           restaurantWhatsApp={data?.profile.whatsapp_number} 
+          allowOnlinePayment={canOrder}
         />
       )}
       {data?.survey && <SurveyToast survey={data.survey} />}

@@ -28,12 +28,14 @@ export function CheckoutDialog({ isOpen, onOpenChange, restaurantId }: CheckoutD
   const [customerName, setCustomerName] = useState("");
   const [notes, setNotes] = useState("");
   const [step, setStep] = useState<'details' | 'payment'>('details');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const createOrderAndPaymentIntent = async () => {
     if (!customerName) {
       showError("Por favor, informe seu nome.");
       return;
     }
+    setIsProcessing(true);
 
     try {
       // 1. Create order in DB with 'awaiting_payment' status
@@ -65,9 +67,9 @@ export function CheckoutDialog({ isOpen, onOpenChange, restaurantId }: CheckoutD
       const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
       if (itemsError) throw itemsError;
 
-      // 2. Create Payment Intent via Edge Function
+      // 2. Create Payment Intent via Edge Function, now with coupon validation
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment-intent', {
-        body: { cartItems, restaurantId },
+        body: { cartItems, restaurantId, couponCode: appliedCoupon?.code },
       });
       if (paymentError) throw paymentError;
       
@@ -86,6 +88,8 @@ export function CheckoutDialog({ isOpen, onOpenChange, restaurantId }: CheckoutD
 
     } catch (error: any) {
       showError(`Erro ao iniciar pagamento: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -93,6 +97,16 @@ export function CheckoutDialog({ isOpen, onOpenChange, restaurantId }: CheckoutD
     clientSecret,
     appearance: { theme: 'stripe' },
   };
+
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      setStep('details');
+      setClientSecret('');
+      setOrderId('');
+      // Do not clear customerName and notes, user might just be reopening
+    }
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -114,8 +128,8 @@ export function CheckoutDialog({ isOpen, onOpenChange, restaurantId }: CheckoutD
               <Label htmlFor="notes">Observações (opcional)</Label>
               <Textarea id="notes" placeholder="Ex: Sem cebola, ponto da carne, etc." value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
-            <Button onClick={createOrderAndPaymentIntent} className="w-full custom-primary-bg">
-              Ir para Pagamento
+            <Button onClick={createOrderAndPaymentIntent} className="w-full custom-primary-bg" disabled={isProcessing}>
+              {isProcessing ? "Processando..." : "Ir para Pagamento"}
             </Button>
           </div>
         )}

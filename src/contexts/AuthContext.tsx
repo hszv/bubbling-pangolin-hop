@@ -10,6 +10,7 @@ type UserProfile = {
   role: "user" | "admin";
   logo_url?: string;
   primary_color?: string;
+  font_family?: string;
   whatsapp_number?: string;
   subscription_renews_at?: string;
 };

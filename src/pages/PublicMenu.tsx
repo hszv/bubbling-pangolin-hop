@@ -57,6 +57,7 @@ type Profile = {
   restaurant_name: string;
   logo_url: string | null;
   primary_color: string | null;
+  font_family: string | null;
   plan: string;
   whatsapp_number: string | null;
 };
@@ -79,7 +80,7 @@ const MenuContent = () => {
   const fetchMenuData = async () => {
     if (!userId) throw new Error("ID do restaurante não fornecido.");
 
-    const profilePromise = supabase.from("profiles").select("restaurant_name, logo_url, primary_color, plan, whatsapp_number").eq("id", userId).single<Profile>();
+    const profilePromise = supabase.from("profiles").select("restaurant_name, logo_url, primary_color, font_family, plan, whatsapp_number").eq("id", userId).single<Profile>();
     const menuItemsPromise = supabase.from("menu_items").select("id, name, description, price, category, image_url").eq("user_id", userId).order("category");
     const bannersPromise = supabase.from("banners").select("id, title, description, image_url, link_url").eq("user_id", userId).eq("is_active", true).order("created_at", { ascending: false });
     const reviewsPromise = supabase.from("reviews").select("id, rating, comment, reviewer_name, created_at").eq("restaurant_id", userId).order("created_at", { ascending: false });
@@ -116,8 +117,12 @@ const MenuContent = () => {
     if (data?.profile.primary_color) {
       document.documentElement.style.setProperty('--custom-primary', data.profile.primary_color);
     }
+    if (data?.profile.font_family) {
+      document.documentElement.style.setProperty('--custom-font', data.profile.font_family);
+    }
     return () => {
       document.documentElement.style.removeProperty('--custom-primary');
+      document.documentElement.style.removeProperty('--custom-font');
     }
   }, [data]);
 
@@ -157,7 +162,7 @@ const MenuContent = () => {
   const canReview = data?.profile.plan === 'Profissional' || data?.profile.plan === 'Premium';
 
   return (
-    <div className="bg-background text-foreground">
+    <div className="bg-background text-foreground" style={{ fontFamily: 'var(--custom-font, inherit)' }}>
       <style>{`.custom-primary-bg { background-color: var(--custom-primary, hsl(var(--primary))); } .custom-primary-text { color: var(--custom-primary, hsl(var(--primary))); }`}</style>
       
       <header className="py-8 text-center sticky top-0 bg-background/80 backdrop-blur-sm z-10">

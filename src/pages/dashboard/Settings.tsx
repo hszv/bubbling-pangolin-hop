@@ -12,12 +12,14 @@ import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { showError, showSuccess } from "@/utils/toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const settingsSchema = z.object({
   restaurant_name: z.string().min(2, "O nome do restaurante é obrigatório."),
   logo_url: z.string().url("Insira uma URL válida para o logo.").optional().or(z.literal('')),
   primary_color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Insira uma cor hexadecimal válida (ex: #FFFFFF).").optional().or(z.literal('')),
   whatsapp_number: z.string().optional(),
+  font_family: z.string().optional(),
 });
 
 const Settings = () => {
@@ -31,6 +33,7 @@ const Settings = () => {
       logo_url: "",
       primary_color: "#000000",
       whatsapp_number: "",
+      font_family: "",
     },
   });
 
@@ -41,6 +44,7 @@ const Settings = () => {
         logo_url: profile.logo_url || "",
         primary_color: profile.primary_color || "#000000",
         whatsapp_number: profile.whatsapp_number || "",
+        font_family: profile.font_family || "",
       });
     }
   }, [profile, form]);
@@ -55,6 +59,7 @@ const Settings = () => {
           logo_url: values.logo_url,
           primary_color: values.primary_color,
           whatsapp_number: values.whatsapp_number,
+          font_family: values.font_family,
         })
         .eq('id', restaurantId);
       if (error) throw error;
@@ -107,6 +112,7 @@ const Settings = () => {
                   <FormField control={form.control} name="restaurant_name" render={({ field }) => (<FormItem><FormLabel>Nome do Restaurante</FormLabel><FormControl><Input placeholder="Pizzaria do Sabor" {...field} /></FormControl><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="logo_url" render={({ field }) => (<FormItem><FormLabel>URL do Logotipo</FormLabel><FormControl><Input placeholder="https://exemplo.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="primary_color" render={({ field }) => (<FormItem><FormLabel>Cor Principal</FormLabel><div className="flex items-center gap-2"><FormControl><Input type="color" className="w-12 h-10 p-1" {...field} /></FormControl><Input placeholder="#FFFFFF" {...field} /></div><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="font_family" render={({ field }) => (<FormItem><FormLabel>Fonte do Cardápio</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Padrão do Sistema" /></SelectTrigger></FormControl><SelectContent><SelectItem value="'Lato', sans-serif">Lato</SelectItem><SelectItem value="'Montserrat', sans-serif">Montserrat</SelectItem><SelectItem value="'Open Sans', sans-serif">Open Sans</SelectItem><SelectItem value="'Playfair Display', serif">Playfair Display</SelectItem><SelectItem value="'Lora', serif">Lora</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="whatsapp_number" render={({ field }) => (<FormItem><FormLabel>Número do WhatsApp</FormLabel><FormControl><Input placeholder="5511999998888" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4">

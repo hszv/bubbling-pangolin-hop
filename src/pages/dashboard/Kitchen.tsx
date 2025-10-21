@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,10 +9,12 @@ import { KitchenOrderCard } from "@/components/dashboard/kitchen/KitchenOrderCar
 import type { Order } from "@/pages/dashboard/Orders";
 import notificationSound from "@/assets/notification.mp3";
 
+const KITCHEN_STATUSES = ["pending", "in_progress", "ready"];
+
 const Kitchen = () => {
   const { restaurantId } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
-  const audio = new Audio(notificationSound);
+  const audio = useMemo(() => new Audio(notificationSound), []);
 
   const fetchInitialOrders = async () => {
     if (!restaurantId) return [];
@@ -20,7 +22,7 @@ const Kitchen = () => {
       .from("orders")
       .select("*")
       .eq("restaurant_id", restaurantId)
-      .in("status", ["pending", "in_progress", "ready"])
+      .in("status", KITCHEN_STATUSES)
       .order("created_at", { ascending: true });
     if (error) throw error;
     return data;
@@ -51,15 +53,28 @@ const Kitchen = () => {
         (payload) => {
           if (payload.eventType === "INSERT") {
             const newOrder = payload.new as Order;
-            setOrders((prev) => [...prev, newOrder]);
-            audio.play().catch(e => console.error("Error playing sound:", e));
+            if (KITCHEN_STATUSES.includes(newOrder.status)) {
+              setOrders((prev) => [...prev, newOrder]);
+              audio.play().catch(e => console.error("Error playing sound:", e));
+            }
           } else if (payload.eventType === "UPDATE") {
             const updatedOrder = payload.new as Order;
-            setOrders((prev) =>
-              prev.map((order) =>
-                order.id === updatedOrder.id ? updatedOrder : order
-              )
-            );
+            if (KITCHEN_STATUSES.includes(updatedOrder.status)) {
+              setOrders((prev) => {
+                const existing = prev.find(o => o.id === updatedOrder.id);
+                if (existing) {
+                  return prev.map((order) =>
+                    order.id === updatedOrder.id ? updatedOrder : order
+                  );
+                }
+                return [...prev, updatedOrder];
+              });
+            } else {
+              setOrders((prev) => prev.filter((order) => order.id !== updatedOrder.id));
+            }
+          } else if (payload.eventType === "DELETE") {
+            const deletedOrder = payload.old as Partial<Order>;
+            setOrders((prev) => prev.filter((order) => order.id !== deletedOrder.id));
           }
         }
       )
@@ -71,7 +86,7 @@ const Kitchen = () => {
   }, [restaurantId, audio]);
 
   const filterOrdersByStatus = (status: string) => {
-    return orders.filter((order) => order.status === status);
+    return orders.filter((order) => order.status === status).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   };
 
   const pendingOrders = filterOrdersByStatus("pending");

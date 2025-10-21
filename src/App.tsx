@@ -27,6 +27,7 @@ import Bot from "./pages/dashboard/Bot";
 import Tables from "./pages/dashboard/Tables";
 import Kitchen from "./pages/dashboard/Kitchen";
 import Surveys from "./pages/dashboard/Surveys";
+import Team from "./pages/dashboard/Team";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,7 @@ const App = () => (
               <Route path="reviews" element={<Reviews />} />
               <Route path="surveys" element={<Surveys />} />
               <Route path="bot" element={<Bot />} />
+              <Route path="team" element={<Team />} />
               <Route path="settings" element={<Settings />} />
             </Route>
 

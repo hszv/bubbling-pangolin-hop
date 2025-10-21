@@ -9,9 +9,10 @@ import { DeleteMemberDialog } from "./DeleteMemberDialog";
 
 interface TeamMembersTableProps {
   members: TeamMember[];
+  onEditRole: (member: TeamMember) => void;
 }
 
-export function TeamMembersTable({ members }: TeamMembersTableProps) {
+export function TeamMembersTable({ members, onEditRole }: TeamMembersTableProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
 
@@ -41,7 +42,7 @@ export function TeamMembersTable({ members }: TeamMembersTableProps) {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild><Button aria-haspopup="true" size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem disabled>Alterar Função</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEditRole(member)}>Alterar Função</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDeleteClick(member)}>Remover</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

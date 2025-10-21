@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { TeamMembersTable } from "@/components/dashboard/team/TeamMembersTable";
 import { InviteMemberSheet } from "@/components/dashboard/team/InviteMemberSheet";
+import { EditMemberRoleDialog } from "@/components/dashboard/team/EditMemberRoleDialog";
 
 export type TeamMember = {
   id: string;
@@ -21,6 +22,8 @@ export type TeamMember = {
 const Team = () => {
   const { user } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [memberToEdit, setMemberToEdit] = useState<TeamMember | null>(null);
 
   const fetchTeamMembers = async () => {
     if (!user) throw new Error("Usuário não autenticado.");
@@ -43,6 +46,11 @@ const Team = () => {
     enabled: !!user,
   });
 
+  const handleEditRole = (member: TeamMember) => {
+    setMemberToEdit(member);
+    setIsEditDialogOpen(true);
+  };
+
   return (
     <FeatureGuard requiredPlan="Premium" featureName="Gestão de Equipe">
       <div>
@@ -55,9 +63,16 @@ const Team = () => {
 
         {isLoading && <Skeleton className="h-64 w-full" />}
         {error && <Alert variant="destructive"><AlertTitle>Erro</AlertTitle><AlertDescription>Não foi possível carregar os membros da equipe.</AlertDescription></Alert>}
-        {members && <TeamMembersTable members={members} />}
+        {members && <TeamMembersTable members={members} onEditRole={handleEditRole} />}
 
         <InviteMemberSheet isOpen={isSheetOpen} onClose={() => setIsSheetOpen(false)} />
+        {memberToEdit && (
+          <EditMemberRoleDialog 
+            isOpen={isEditDialogOpen}
+            onClose={() => setIsEditDialogOpen(false)}
+            member={memberToEdit}
+          />
+        )}
       </div>
     </FeatureGuard>
   );

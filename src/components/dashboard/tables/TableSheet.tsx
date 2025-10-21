@@ -29,7 +29,7 @@ const formSchema = z.object({
 
 export function TableSheet({ isOpen, onClose }: TableSheetProps) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { restaurantId } = useAuth();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { table_number: "" },
@@ -37,14 +37,14 @@ export function TableSheet({ isOpen, onClose }: TableSheetProps) {
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      if (!user) throw new Error("Usuário não autenticado.");
+      if (!restaurantId) throw new Error("ID do restaurante não autenticado.");
       const { error } = await supabase
         .from("restaurant_tables")
-        .insert({ ...values, restaurant_id: user.id });
+        .insert({ ...values, restaurant_id: restaurantId });
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tables"] });
+      queryClient.invalidateQueries({ queryKey: ["tables", restaurantId] });
       showSuccess("Mesa adicionada com sucesso!");
       form.reset();
       onClose();

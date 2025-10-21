@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 
 export function UserNav() {
-  const { user } = useAuth();
+  const { user, restaurantId } = useAuth();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -45,9 +45,9 @@ export function UserNav() {
         <DropdownMenuItem asChild>
           <Link to="/dashboard">Dashboard</Link>
         </DropdownMenuItem>
-        {user && (
+        {restaurantId && (
           <DropdownMenuItem asChild>
-            <a href={`/menu/${user.id}`} target="_blank" rel="noopener noreferrer">
+            <a href={`/menu/${restaurantId}`} target="_blank" rel="noopener noreferrer">
               Ver Meu Cardápio
             </a>
           </DropdownMenuItem>

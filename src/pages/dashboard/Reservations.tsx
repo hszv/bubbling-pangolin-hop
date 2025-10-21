@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FeatureGuard } from "@/components/FeatureGuard";
 import { ReservationsTable } from "@/components/dashboard/reservations/ReservationsTable";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type Reservation = {
   id: string;
@@ -19,14 +20,15 @@ export type Reservation = {
 };
 
 const Reservations = () => {
+  const { restaurantId } = useAuth();
+
   const fetchReservations = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not found");
+    if (!restaurantId) throw new Error("ID do restaurante não encontrado");
 
     const { data, error } = await supabase
       .from("reservations")
       .select("*")
-      .eq("restaurant_id", user.id)
+      .eq("restaurant_id", restaurantId)
       .order("reservation_date", { ascending: false });
 
     if (error) throw error;
@@ -34,8 +36,9 @@ const Reservations = () => {
   };
 
   const { data: reservations, isLoading, error } = useQuery<Reservation[]>({
-    queryKey: ["reservations"],
+    queryKey: ["reservations", restaurantId],
     queryFn: fetchReservations,
+    enabled: !!restaurantId,
   });
 
   return (

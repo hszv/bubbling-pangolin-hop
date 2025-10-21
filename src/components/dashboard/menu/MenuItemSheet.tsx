@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
 import type { MenuItem } from "@/pages/dashboard/Menu";
 import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface MenuItemSheetProps {
   isOpen: boolean;
@@ -44,6 +45,7 @@ const formSchema = z.object({
 
 export function MenuItemSheet({ isOpen, onClose, menuItem }: MenuItemSheetProps) {
   const queryClient = useQueryClient();
+  const { restaurantId } = useAuth();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -77,12 +79,11 @@ export function MenuItemSheet({ isOpen, onClose, menuItem }: MenuItemSheetProps)
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      if (!restaurantId) throw new Error("ID do restaurante não autenticado");
 
       const dataToUpsert = {
         ...values,
-        user_id: user.id,
+        user_id: restaurantId,
         id: menuItem?.id,
       };
 
@@ -90,7 +91,7 @@ export function MenuItemSheet({ isOpen, onClose, menuItem }: MenuItemSheetProps)
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["menuItems"] });
+      queryClient.invalidateQueries({ queryKey: ["menuItems", restaurantId] });
       showSuccess(`Item ${menuItem ? 'atualizado' : 'criado'} com sucesso!`);
       onClose();
     },

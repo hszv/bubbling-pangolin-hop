@@ -32,6 +32,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
 import type { Coupon } from "@/pages/dashboard/Coupons";
 import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CouponSheetProps {
   isOpen: boolean;
@@ -47,6 +48,7 @@ const formSchema = z.object({
 
 export function CouponSheet({ isOpen, onClose, coupon }: CouponSheetProps) {
   const queryClient = useQueryClient();
+  const { restaurantId } = useAuth();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -74,12 +76,11 @@ export function CouponSheet({ isOpen, onClose, coupon }: CouponSheetProps) {
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      if (!restaurantId) throw new Error("ID do restaurante não encontrado");
 
       const dataToUpsert = {
         ...values,
-        user_id: user.id,
+        user_id: restaurantId,
         id: coupon?.id,
       };
 
@@ -87,7 +88,7 @@ export function CouponSheet({ isOpen, onClose, coupon }: CouponSheetProps) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["coupons"] });
+      queryClient.invalidateQueries({ queryKey: ["coupons", restaurantId] });
       showSuccess(`Cupom ${coupon ? 'atualizado' : 'criado'} com sucesso!`);
       onClose();
     },

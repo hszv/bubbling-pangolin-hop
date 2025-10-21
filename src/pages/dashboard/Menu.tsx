@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MenuItemsTable } from "@/components/dashboard/menu/MenuItemsTable";
 import { MenuItemSheet } from "@/components/dashboard/menu/MenuItemSheet";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type MenuItem = {
   id: string;
@@ -20,19 +21,17 @@ export type MenuItem = {
 };
 
 const Menu = () => {
+  const { restaurantId } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
 
   const fetchMenuItems = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not found");
+    if (!restaurantId) throw new Error("ID do restaurante não encontrado");
 
     const { data, error } = await supabase
       .from("menu_items")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", restaurantId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -40,8 +39,9 @@ const Menu = () => {
   };
 
   const { data: menuItems, isLoading, error } = useQuery<MenuItem[]>({
-    queryKey: ["menuItems"],
+    queryKey: ["menuItems", restaurantId],
     queryFn: fetchMenuItems,
+    enabled: !!restaurantId,
   });
 
   const handleEdit = (item: MenuItem) => {

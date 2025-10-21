@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FeatureGuard } from "@/components/FeatureGuard";
 import { CouponsTable } from "@/components/dashboard/coupons/CouponsTable";
 import { CouponSheet } from "@/components/dashboard/coupons/CouponSheet";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type Coupon = {
   id: string;
@@ -20,17 +21,17 @@ export type Coupon = {
 };
 
 const Coupons = () => {
+  const { restaurantId } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
 
   const fetchCoupons = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not found");
+    if (!restaurantId) throw new Error("ID do restaurante não encontrado");
 
     const { data, error } = await supabase
       .from("coupons")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", restaurantId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -38,8 +39,9 @@ const Coupons = () => {
   };
 
   const { data: coupons, isLoading, error } = useQuery<Coupon[]>({
-    queryKey: ["coupons"],
+    queryKey: ["coupons", restaurantId],
     queryFn: fetchCoupons,
+    enabled: !!restaurantId,
   });
 
   const handleEdit = (coupon: Coupon) => {

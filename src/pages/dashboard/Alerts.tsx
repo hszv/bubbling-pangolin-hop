@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FeatureGuard } from "@/components/FeatureGuard";
 import { AlertsTable } from "@/components/dashboard/alerts/AlertsTable";
 import { AlertSheet } from "@/components/dashboard/alerts/AlertSheet";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type PromotionalAlert = {
   id: string;
@@ -21,17 +22,17 @@ export type PromotionalAlert = {
 };
 
 const Alerts = () => {
+  const { restaurantId } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<PromotionalAlert | null>(null);
 
   const fetchAlerts = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not found");
+    if (!restaurantId) throw new Error("ID do restaurante não encontrado");
 
     const { data, error } = await supabase
       .from("promotional_alerts")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", restaurantId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -39,8 +40,9 @@ const Alerts = () => {
   };
 
   const { data: alerts, isLoading, error } = useQuery<PromotionalAlert[]>({
-    queryKey: ["alerts"],
+    queryKey: ["alerts", restaurantId],
     queryFn: fetchAlerts,
+    enabled: !!restaurantId,
   });
 
   const handleEdit = (alert: PromotionalAlert) => {

@@ -11,6 +11,7 @@ type UserProfile = {
   logo_url?: string;
   primary_color?: string;
   whatsapp_number?: string;
+  subscription_renews_at?: string;
 };
 
 interface AuthContextType {
@@ -18,6 +19,7 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
+  restaurantId: string | null;
   refetchProfile: () => Promise<void>;
 }
 
@@ -28,19 +30,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfileAndRestaurantId = useCallback(async (user: User) => {
+    const { data: teamMemberData } = await supabase
+      .from('team_members')
+      .select('restaurant_id')
+      .eq('user_id', user.id)
+      .single();
+
+    const currentRestaurantId = teamMemberData ? teamMemberData.restaurant_id : user.id;
+    setRestaurantId(currentRestaurantId);
+
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
+      .eq('id', currentRestaurantId)
       .single();
 
     if (profileData) {
       setProfile(profileData);
     } else if (profileError) {
-      console.error("Erro ao buscar perfil:", profileError.message);
+      console.error("Erro ao buscar perfil do restaurante:", profileError.message);
       setProfile(null);
     }
   }, []);
@@ -52,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session) {
         setSession(session);
         setUser(session.user);
-        await fetchProfile(session.user.id);
+        await fetchProfileAndRestaurantId(session.user);
       }
       setLoading(false);
     };
@@ -64,12 +76,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
 
       if (event === 'SIGNED_IN' && session) {
-        await fetchProfile(session.user.id);
+        await fetchProfileAndRestaurantId(session.user);
         navigate('/dashboard');
       }
       
       if (event === 'SIGNED_OUT') {
         setProfile(null);
+        setRestaurantId(null);
         navigate('/login');
       }
       if (event !== 'INITIAL_SESSION') {
@@ -80,19 +93,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [navigate, fetchProfile]);
+  }, [navigate, fetchProfileAndRestaurantId]);
 
   const refetchProfile = useCallback(async () => {
     if (user) {
-      await fetchProfile(user.id);
+      await fetchProfileAndRestaurantId(user);
     }
-  }, [user, fetchProfile]);
+  }, [user, fetchProfileAndRestaurantId]);
 
   const value = {
     session,
     user,
     profile,
     loading,
+    restaurantId,
     refetchProfile,
   };
 

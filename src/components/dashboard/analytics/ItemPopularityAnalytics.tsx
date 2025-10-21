@@ -14,21 +14,21 @@ type ItemPopularity = {
 };
 
 export const ItemPopularityAnalytics = () => {
-  const { user } = useAuth();
+  const { restaurantId } = useAuth();
 
   const fetchItemPopularity = async () => {
-    if (!user) throw new Error("Usuário não autenticado.");
+    if (!restaurantId) throw new Error("ID do restaurante não autenticado.");
     const { data, error } = await supabase.rpc('get_item_click_popularity', {
-      restaurant_id_param: user.id
+      restaurant_id_param: restaurantId
     });
     if (error) throw error;
     return data;
   };
 
   const { data, isLoading, error } = useQuery<ItemPopularity[]>({
-    queryKey: ["itemPopularity", user?.id],
+    queryKey: ["itemPopularity", restaurantId],
     queryFn: fetchItemPopularity,
-    enabled: !!user,
+    enabled: !!restaurantId,
   });
 
   const processedData = useMemo(() => {

@@ -6,14 +6,14 @@ import { Download } from 'lucide-react';
 import { useRef } from 'react';
 
 export const QRCodeDisplay = () => {
-  const { user } = useAuth();
+  const { restaurantId } = useAuth();
   const qrRef = useRef<SVGSVGElement>(null);
 
-  if (!user) {
+  if (!restaurantId) {
     return null;
   }
 
-  const menuUrl = `${window.location.origin}/menu/${user.id}`;
+  const menuUrl = `${window.location.origin}/menu/${restaurantId}`;
 
   const downloadQRCode = () => {
     if (qrRef.current) {

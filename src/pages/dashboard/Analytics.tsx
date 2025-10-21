@@ -31,25 +31,25 @@ const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", { style
 
 // Componente para a aba de Visão Geral (Cliques e Visualizações)
 const OverviewAnalytics = () => {
-  const { user } = useAuth();
+  const { restaurantId } = useAuth();
   const fetchAnalyticsData = async () => {
-    if (!user) throw new Error("User not found");
+    if (!restaurantId) throw new Error("ID do restaurante não encontrado");
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const { data, error } = await supabase
       .from("menu_analytics")
       .select("event_type, created_at, metadata")
-      .eq("restaurant_id", user.id)
+      .eq("restaurant_id", restaurantId)
       .gte("created_at", thirtyDaysAgo.toISOString());
     if (error) throw error;
     return data;
   };
 
   const { data: analytics, isLoading, error } = useQuery<AnalyticsEvent[]>({
-    queryKey: ["analytics", user?.id],
+    queryKey: ["analytics", restaurantId],
     queryFn: fetchAnalyticsData,
-    enabled: !!user,
+    enabled: !!restaurantId,
   });
 
   const processedData = useMemo(() => {
@@ -98,18 +98,18 @@ const OverviewAnalytics = () => {
 
 // Componente para a aba de Performance de Vendas
 const SalesPerformanceAnalytics = () => {
-  const { user } = useAuth();
+  const { restaurantId } = useAuth();
   const fetchSalesData = async () => {
-    if (!user) throw new Error("User not found");
-    const { data, error } = await supabase.rpc('get_menu_item_performance', { restaurant_id_param: user.id });
+    if (!restaurantId) throw new Error("ID do restaurante não encontrado");
+    const { data, error } = await supabase.rpc('get_menu_item_performance', { restaurant_id_param: restaurantId });
     if (error) throw error;
     return data;
   };
 
   const { data: salesData, isLoading, error } = useQuery<SalesPerformanceData[]>({
-    queryKey: ["salesPerformance", user?.id],
+    queryKey: ["salesPerformance", restaurantId],
     queryFn: fetchSalesData,
-    enabled: !!user,
+    enabled: !!restaurantId,
   });
 
   const abcAnalysis = useMemo(() => {

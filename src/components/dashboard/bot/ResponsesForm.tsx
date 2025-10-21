@@ -37,15 +37,15 @@ const messageTypes = [
 ];
 
 export function ResponsesForm() {
-  const { user } = useAuth();
+  const { restaurantId } = useAuth();
   const queryClient = useQueryClient();
 
   const fetchResponses = async () => {
-    if (!user) return [];
+    if (!restaurantId) return [];
     const { data, error } = await supabase
       .from("whatsapp_responses")
       .select("message_type, message_text")
-      .eq("restaurant_id", user.id);
+      .eq("restaurant_id", restaurantId);
     if (error) throw error;
 
     const existingTypes = data.map(d => d.message_type);
@@ -54,8 +54,9 @@ export function ResponsesForm() {
   };
 
   const { data: responses, isLoading, error } = useQuery({
-    queryKey: ["whatsappResponses", user?.id],
+    queryKey: ["whatsappResponses", restaurantId],
     queryFn: fetchResponses,
+    enabled: !!restaurantId,
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -70,9 +71,9 @@ export function ResponsesForm() {
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      if (!user) throw new Error("Usuário não autenticado.");
+      if (!restaurantId) throw new Error("ID do restaurante não encontrado.");
       const dataToUpsert = values.responses.map(r => ({
-        restaurant_id: user.id,
+        restaurant_id: restaurantId,
         message_type: r.message_type,
         message_text: r.message_text,
       }));
@@ -80,7 +81,7 @@ export function ResponsesForm() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["whatsappResponses"] });
+      queryClient.invalidateQueries({ queryKey: ["whatsappResponses", restaurantId] });
       showSuccess("Respostas salvas com sucesso!");
     },
     onError: (err) => {

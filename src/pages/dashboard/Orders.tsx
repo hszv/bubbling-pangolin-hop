@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FeatureGuard } from "@/components/FeatureGuard";
 import { OrdersTable } from "@/components/dashboard/orders/OrdersTable";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type Order = {
   id: string;
@@ -16,14 +17,15 @@ export type Order = {
 };
 
 const Orders = () => {
+  const { restaurantId } = useAuth();
+
   const fetchOrders = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not found");
+    if (!restaurantId) throw new Error("ID do restaurante não encontrado");
 
     const { data, error } = await supabase
       .from("orders")
       .select("*")
-      .eq("restaurant_id", user.id)
+      .eq("restaurant_id", restaurantId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -31,8 +33,9 @@ const Orders = () => {
   };
 
   const { data: orders, isLoading, error } = useQuery<Order[]>({
-    queryKey: ["orders"],
+    queryKey: ["orders", restaurantId],
     queryFn: fetchOrders,
+    enabled: !!restaurantId,
   });
 
   return (

@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FeatureGuard } from "@/components/FeatureGuard";
 import { BannersTable } from "@/components/dashboard/banners/BannersTable";
 import { BannerSheet } from "@/components/dashboard/banners/BannerSheet";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type Banner = {
   id: string;
@@ -21,17 +22,17 @@ export type Banner = {
 };
 
 const Banners = () => {
+  const { restaurantId } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedBanner, setSelectedBanner] = useState<Banner | null>(null);
 
   const fetchBanners = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not found");
+    if (!restaurantId) throw new Error("ID do restaurante não encontrado");
 
     const { data, error } = await supabase
       .from("banners")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", restaurantId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -39,8 +40,9 @@ const Banners = () => {
   };
 
   const { data: banners, isLoading, error } = useQuery<Banner[]>({
-    queryKey: ["banners"],
+    queryKey: ["banners", restaurantId],
     queryFn: fetchBanners,
+    enabled: !!restaurantId,
   });
 
   const handleEdit = (banner: Banner) => {

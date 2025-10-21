@@ -10,16 +10,16 @@ import type { Order } from "@/pages/dashboard/Orders";
 import notificationSound from "@/assets/notification.mp3";
 
 const Kitchen = () => {
-  const { user } = useAuth();
+  const { restaurantId } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const audio = new Audio(notificationSound);
 
   const fetchInitialOrders = async () => {
-    if (!user) return [];
+    if (!restaurantId) return [];
     const { data, error } = await supabase
       .from("orders")
       .select("*")
-      .eq("restaurant_id", user.id)
+      .eq("restaurant_id", restaurantId)
       .in("status", ["pending", "in_progress", "ready"])
       .order("created_at", { ascending: true });
     if (error) throw error;
@@ -27,26 +27,26 @@ const Kitchen = () => {
   };
 
   const { isLoading, error } = useQuery<Order[]>({
-    queryKey: ["kitchenOrders", user?.id],
+    queryKey: ["kitchenOrders", restaurantId],
     queryFn: fetchInitialOrders,
     onSuccess: (data) => {
       setOrders(data);
     },
-    enabled: !!user,
+    enabled: !!restaurantId,
   });
 
   useEffect(() => {
-    if (!user) return;
+    if (!restaurantId) return;
 
     const channel = supabase
-      .channel(`kitchen-orders:${user.id}`)
+      .channel(`kitchen-orders:${restaurantId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "orders",
-          filter: `restaurant_id=eq.${user.id}`,
+          filter: `restaurant_id=eq.${restaurantId}`,
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
@@ -68,7 +68,7 @@ const Kitchen = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, audio]);
+  }, [restaurantId, audio]);
 
   const filterOrdersByStatus = (status: string) => {
     return orders.filter((order) => order.status === status);

@@ -24,7 +24,7 @@ const formSchema = z.object({
 
 export function SurveySheet({ isOpen, onClose, survey }: SurveySheetProps) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { restaurantId } = useAuth();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { question: "" },
@@ -37,13 +37,13 @@ export function SurveySheet({ isOpen, onClose, survey }: SurveySheetProps) {
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      if (!user) throw new Error("Usuário não autenticado.");
-      const dataToUpsert = { ...values, restaurant_id: user.id, id: survey?.id };
+      if (!restaurantId) throw new Error("ID do restaurante não autenticado.");
+      const dataToUpsert = { ...values, restaurant_id: restaurantId, id: survey?.id };
       const { error } = await supabase.from("surveys").upsert(dataToUpsert).select();
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["surveys"] });
+      queryClient.invalidateQueries({ queryKey: ["surveys", restaurantId] });
       showSuccess(`Pesquisa ${survey ? 'atualizada' : 'criada'} com sucesso!`);
       onClose();
     },

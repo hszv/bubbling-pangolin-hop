@@ -21,7 +21,9 @@ const settingsSchema = z.object({
 });
 
 const Settings = () => {
-  const { profile, user, loading, refetchProfile } = useAuth();
+  const { profile, user, loading, refetchProfile, restaurantId } = useAuth();
+  const isOwner = user?.id === restaurantId;
+
   const form = useForm<z.infer<typeof settingsSchema>>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
@@ -45,7 +47,7 @@ const Settings = () => {
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof settingsSchema>) => {
-      if (!user) throw new Error("Usuário não autenticado.");
+      if (!isOwner || !restaurantId) throw new Error("Apenas o proprietário pode alterar as configurações.");
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -54,7 +56,7 @@ const Settings = () => {
           primary_color: values.primary_color,
           whatsapp_number: values.whatsapp_number,
         })
-        .eq('id', user.id);
+        .eq('id', restaurantId);
       if (error) throw error;
     },
     onSuccess: async () => {
@@ -95,21 +97,23 @@ const Settings = () => {
       <div className="grid gap-6 md:grid-cols-2">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Perfil do Restaurante</CardTitle>
-                <CardDescription>Personalize as informações e a aparência do seu cardápio.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField control={form.control} name="restaurant_name" render={({ field }) => (<FormItem><FormLabel>Nome do Restaurante</FormLabel><FormControl><Input placeholder="Pizzaria do Sabor" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="logo_url" render={({ field }) => (<FormItem><FormLabel>URL do Logotipo</FormLabel><FormControl><Input placeholder="https://exemplo.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="primary_color" render={({ field }) => (<FormItem><FormLabel>Cor Principal</FormLabel><div className="flex items-center gap-2"><FormControl><Input type="color" className="w-12 h-10 p-1" {...field} /></FormControl><Input placeholder="#FFFFFF" {...field} /></div><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="whatsapp_number" render={({ field }) => (<FormItem><FormLabel>Número do WhatsApp</FormLabel><FormControl><Input placeholder="5511999998888" {...field} /></FormControl><FormMessage /></FormItem>)} />
-              </CardContent>
-              <CardFooter className="border-t px-6 py-4">
-                <Button type="submit" disabled={mutation.isPending}>{mutation.isPending ? "Salvando..." : "Salvar Alterações"}</Button>
-              </CardFooter>
-            </Card>
+            <fieldset disabled={!isOwner}>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Perfil do Restaurante</CardTitle>
+                  <CardDescription>Personalize as informações e a aparência do seu cardápio.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <FormField control={form.control} name="restaurant_name" render={({ field }) => (<FormItem><FormLabel>Nome do Restaurante</FormLabel><FormControl><Input placeholder="Pizzaria do Sabor" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="logo_url" render={({ field }) => (<FormItem><FormLabel>URL do Logotipo</FormLabel><FormControl><Input placeholder="https://exemplo.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="primary_color" render={({ field }) => (<FormItem><FormLabel>Cor Principal</FormLabel><div className="flex items-center gap-2"><FormControl><Input type="color" className="w-12 h-10 p-1" {...field} /></FormControl><Input placeholder="#FFFFFF" {...field} /></div><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="whatsapp_number" render={({ field }) => (<FormItem><FormLabel>Número do WhatsApp</FormLabel><FormControl><Input placeholder="5511999998888" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                </CardContent>
+                <CardFooter className="border-t px-6 py-4">
+                  <Button type="submit" disabled={mutation.isPending || !isOwner}>{mutation.isPending ? "Salvando..." : "Salvar Alterações"}</Button>
+                </CardFooter>
+              </Card>
+            </fieldset>
           </form>
         </Form>
         <div className="space-y-6">
@@ -127,10 +131,10 @@ const Settings = () => {
               )}
             </CardContent>
             <CardFooter className="border-t px-6 py-4">
-              {profile?.plan !== 'Básico' ? (
+              {isOwner && profile?.plan !== 'Básico' ? (
                 <Button onClick={handleManageSubscription}>Gerenciar Assinatura</Button>
               ) : (
-                <p className="text-sm text-muted-foreground">Faça upgrade para gerenciar uma assinatura.</p>
+                <p className="text-sm text-muted-foreground">Apenas o proprietário pode gerenciar a assinatura.</p>
               )}
             </CardFooter>
           </Card>

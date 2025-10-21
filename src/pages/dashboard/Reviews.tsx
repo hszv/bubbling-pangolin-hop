@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FeatureGuard } from "@/components/FeatureGuard";
 import { ReviewsTable } from "@/components/dashboard/reviews/ReviewsTable";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type Review = {
   id: string;
@@ -15,14 +16,15 @@ export type Review = {
 };
 
 const Reviews = () => {
+  const { restaurantId } = useAuth();
+
   const fetchReviews = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not found");
+    if (!restaurantId) throw new Error("ID do restaurante não encontrado");
 
     const { data, error } = await supabase
       .from("reviews")
       .select("*")
-      .eq("restaurant_id", user.id)
+      .eq("restaurant_id", restaurantId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -30,8 +32,9 @@ const Reviews = () => {
   };
 
   const { data: reviews, isLoading, error } = useQuery<Review[]>({
-    queryKey: ["reviews"],
+    queryKey: ["reviews", restaurantId],
     queryFn: fetchReviews,
+    enabled: !!restaurantId,
   });
 
   return (

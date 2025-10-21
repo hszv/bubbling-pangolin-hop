@@ -19,24 +19,24 @@ export type RestaurantTable = {
 };
 
 const Tables = () => {
-  const { user } = useAuth();
+  const { restaurantId } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const fetchTables = async () => {
-    if (!user) throw new Error("Usuário não autenticado.");
+    if (!restaurantId) throw new Error("ID do restaurante não autenticado.");
     const { data, error } = await supabase
       .from("restaurant_tables")
       .select("*")
-      .eq("restaurant_id", user.id)
+      .eq("restaurant_id", restaurantId)
       .order("table_number");
     if (error) throw error;
     return data;
   };
 
   const { data: tables, isLoading, error } = useQuery<RestaurantTable[]>({
-    queryKey: ["tables", user?.id],
+    queryKey: ["tables", restaurantId],
     queryFn: fetchTables,
-    enabled: !!user,
+    enabled: !!restaurantId,
   });
 
   return (

@@ -7,10 +7,10 @@ import { Utensils, ShoppingCart, Calendar, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Overview = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, restaurantId } = useAuth();
 
   const fetchOverviewData = async () => {
-    if (!user || !profile) return null;
+    if (!restaurantId || !profile) return null;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -20,25 +20,25 @@ const Overview = () => {
     const menuItemsPromise = supabase
       .from("menu_items")
       .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id);
+      .eq("user_id", restaurantId);
 
     const ordersPromise = profile.plan === 'Premium' ? supabase
       .from("orders")
       .select("id", { count: "exact", head: true })
-      .eq("restaurant_id", user.id)
+      .eq("restaurant_id", restaurantId)
       .gte("created_at", today.toISOString())
       .lt("created_at", tomorrow.toISOString()) : Promise.resolve({ count: 0, error: null });
 
     const reservationsPromise = (profile.plan === 'Profissional' || profile.plan === 'Premium') ? supabase
       .from("reservations")
       .select("id", { count: "exact", head: true })
-      .eq("restaurant_id", user.id)
+      .eq("restaurant_id", restaurantId)
       .eq("status", "pending") : Promise.resolve({ count: 0, error: null });
 
     const reviewsPromise = (profile.plan === 'Profissional' || profile.plan === 'Premium') ? supabase
       .from("reviews")
       .select("rating")
-      .eq("restaurant_id", user.id) : Promise.resolve({ data: [], error: null });
+      .eq("restaurant_id", restaurantId) : Promise.resolve({ data: [], error: null });
 
     const [
       { count: menuItemsCount, error: menuItemsError },
@@ -65,9 +65,9 @@ const Overview = () => {
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: ["overviewData", user?.id],
+    queryKey: ["overviewData", restaurantId],
     queryFn: fetchOverviewData,
-    enabled: !!user && !!profile,
+    enabled: !!restaurantId && !!profile,
   });
 
   const planLevel = {
@@ -120,7 +120,7 @@ const Overview = () => {
             Use este painel para gerenciar seu cardápio, acompanhar pedidos e muito mais.
           </p>
           <Button asChild className="w-fit">
-            <a href={`/menu/${user?.id}`} target="_blank" rel="noopener noreferrer">
+            <a href={`/menu/${restaurantId}`} target="_blank" rel="noopener noreferrer">
               Ver meu Cardápio
             </a>
           </Button>

@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { showSuccess, showError } from "@/utils/toast";
 import type { PromotionalAlert } from "@/pages/dashboard/Alerts";
 import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AlertSheetProps {
   isOpen: boolean;
@@ -42,6 +43,7 @@ const formSchema = z.object({
 
 export function AlertSheet({ isOpen, onClose, alert }: AlertSheetProps) {
   const queryClient = useQueryClient();
+  const { restaurantId } = useAuth();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -72,12 +74,11 @@ export function AlertSheet({ isOpen, onClose, alert }: AlertSheetProps) {
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      if (!restaurantId) throw new Error("ID do restaurante não encontrado");
 
       const dataToUpsert = {
         ...values,
-        user_id: user.id,
+        user_id: restaurantId,
         id: alert?.id,
       };
 
@@ -85,7 +86,7 @@ export function AlertSheet({ isOpen, onClose, alert }: AlertSheetProps) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["alerts"] });
+      queryClient.invalidateQueries({ queryKey: ["alerts", restaurantId] });
       showSuccess(`Alerta ${alert ? 'atualizado' : 'criado'} com sucesso!`);
       onClose();
     },

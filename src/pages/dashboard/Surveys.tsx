@@ -19,23 +19,23 @@ export type SurveyWithCount = {
 };
 
 const Surveys = () => {
-  const { user } = useAuth();
+  const { restaurantId } = useAuth();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<SurveyWithCount | null>(null);
 
   const fetchSurveys = async () => {
-    if (!user) throw new Error("Usuário não autenticado.");
+    if (!restaurantId) throw new Error("ID do restaurante não autenticado.");
     const { data, error } = await supabase.rpc('get_surveys_with_response_count', {
-      restaurant_id_param: user.id
+      restaurant_id_param: restaurantId
     });
     if (error) throw error;
     return data;
   };
 
   const { data: surveys, isLoading, error } = useQuery<SurveyWithCount[]>({
-    queryKey: ["surveys", user?.id],
+    queryKey: ["surveys", restaurantId],
     queryFn: fetchSurveys,
-    enabled: !!user,
+    enabled: !!restaurantId,
   });
 
   const handleEdit = (survey: SurveyWithCount) => {
